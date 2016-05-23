@@ -1,22 +1,22 @@
 using Alchemy4Tridion.Plugins.GUI.Configuration;
 using Alchemy4Tridion.Plugins.GUI.Configuration.Elements;
 
-namespace NotUsed.Config
+namespace LatestItems.Config
 {
     /// <summary>
     /// Represents the ResourceGroup element within the editor configuration that contains this plugin's files
     /// and references.
     /// </summary>
-    public class NotUsedPopupResourceGroup : ResourceGroup
+    public class LatestItemsPopupResourceGroup : ResourceGroup
     {
         /// <summary>
         /// Constructor
         /// </summary>
-        public NotUsedPopupResourceGroup()
+        public LatestItemsPopupResourceGroup()
         {
             // When adding files you only need to specify the filename and not full path
-            AddFile("NotUsedPopup.js");
-            AddFile("NotUsedPopup.css");
+            AddFile("LatestItemsPopup.js");
+            AddFile("LatestItemsPopup.css");
             // The above is just a convenient way of doing the following...
             // AddFile(FileTypes.Reference, "Alchemy.Plugins.HelloWorld.Commands.HelloCommandSet");
 
@@ -32,7 +32,7 @@ namespace NotUsed.Config
 
             // Let's add our resources to the WhereUsedPlusGroup.aspx page.  This will inject
             // the resources without us having to manually edit it.
-            AttachToView("NotUsed.aspx");
+            AttachToView("LatestItems.aspx");
         }
     }
 }

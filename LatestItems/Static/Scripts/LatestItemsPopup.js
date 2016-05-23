@@ -15,12 +15,12 @@
     var tcm = url.substring(url.indexOf("uri=tcm%3A") + 10, url.indexOf("#"));
 
     // On page load I display the items not in use within the folder defined by tcm.
-    updateNotUsedItems(tcm);
+    updateLatestItems(tcm);
 
     /**
-     * Takes a TCM ID for a Tridion folder and retrieves the a list of the contained items that are not used.
+     * Takes a TCM ID for a Tridion folder and retrieves the a list of the contained items that are latest items.
      */
-    function updateNotUsedItems(tcmInput) {
+    function updateLatestItems(tcmInput) {
 
         //////$j("#progBar").remove().success(function (items) {
         //////})
@@ -30,16 +30,16 @@
         //////});;
 
         // This is the call to my controller where the core service code is used to gather the
-        // not used information. It is returned as a string of HTML.
+        // latest items information. It is returned as a string of HTML.
         // NOTE: Dummy method needed here, as removing function call here stops JS from running properly.
         // TODO: Try to remove this dummy method call
-        Alchemy.Plugins["${PluginName}"].Api.NotUsedService.getDummyItems()
+        Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getDummyItems()
         .success(function (items) {
 
             // First arg in success is what's returned by your controller's action
 
-            // Upon successful retrieval of Not Used items, we want to remove the progress bar and add the not used items to the markup
-            // (there is a progress bar by default in the markup in NotUsed.aspx, as the search starts automatically when the 
+            // Upon successful retrieval of latest items, we want to remove the progress bar and add the latest items to the markup
+            // (there is a progress bar by default in the markup in LatestItems.aspx, as the search starts automatically when the 
             // popup is open).
             $j("#progBar").remove();
             $j(".tab-body.active").append(items);
@@ -47,7 +47,7 @@
             // We want to have an action when we click anywhere on the tab body
             // that isn't a used or using item
             $j(".tab-body").mouseup(function (e) {
-                // To do this we first find the results item containing the not used items
+                // To do this we first find the results item containing the latest items
                 var results = $j(".results");
                 if (!results.is(e.target) // if the target of the click isn't the results...
                 && results.has(e.target).length === 0) // ... nor a descendant of the results
@@ -57,21 +57,21 @@
                 }
             });
 
-            // The refresh button should always be enabled. It essentially re-runs the entire getNotUsedItems procedure, 
+            // The refresh button should always be enabled. It essentially re-runs the entire getLatestItems procedure, 
             // discarding any previously returned items. You may want to use this, for instance, in the scenario where you
             // have a component that is linked to. Once the linking component is deleted, the component linked to may no
             // longer be used, and so a refresh is required.
-            // TODO: consider ways to make this more efficient (i.e. by only re-running the getNotUsedItems procedure for items
+            // TODO: consider ways to make this more efficient (i.e. by only re-running the getLatestItems procedure for items
             // linked to from an item that is deleted). And then consider running this automatically after each deletion.
             $j("#refresh_items").click(function () {
                 // When the refresh button is clicked, we want to clear out the markup for the list of items and add a progress bar, indicating 
                 // a new search for the unused items has begun.
                 $j(".tab-body.active").html("");
                 $j(".tab-body.active").append("<progress id=\"progBar\"></progress>");
-                // Call the same getNotUsedItems() Web API function that is used when the popup is first open.
-                Alchemy.Plugins["${PluginName}"].Api.NotUsedService.getLatestItems(tcmInput, $j("#startDate_date").val(), $j("#endDate_date").val())
+                // Call the same getLatestItems() Web API function that is used when the popup is first open.
+                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItems(tcmInput, $j("#startDate_date").val(), $j("#endDate_date").val())
                 .success(function (items) {
-                    // Upon successful retrieval of Not Used items, we want to remove the progress bar and add the not used items to the markup.
+                    // Upon successful retrieval of latest items, we want to remove the progress bar and add the latest items to the markup.
                     $j("#progBar").remove();
                     $j(".tab-body.active").append(items);
                 })
@@ -95,7 +95,7 @@
                 theTcmString = theTcmString.replace(/tcm:/g, ",");
                 // Remove the comma at the very beginning:
                 theTcmString = theTcmString.substr(1);
-                Alchemy.Plugins["${PluginName}"].Api.NotUsedService.getExportConfig(theTcmString)
+                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig(theTcmString)
                 .success(function (items) {
                     $j("#export_config_text").html(items);
                 })
@@ -125,7 +125,7 @@
 
     /**
      * Common routine that is used to specify what happens when an item in the list of unused items is clicked. 
-     * This function should be called each time the Not Used command is run, and in particular, each time the
+     * This function should be called each time the latest items command is run, and in particular, each time the
      * "refresh" button is clicked.
      */
     function setupForItemClicked() {

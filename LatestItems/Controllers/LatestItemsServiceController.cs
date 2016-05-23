@@ -7,7 +7,7 @@ using System.Web.Http;
 using System.Xml.Linq;
 using Tridion.ContentManager.CoreService.Client;
 
-namespace NotUsed.Controllers
+namespace LatestItems.Controllers
 {
     /// <summary>
     /// A WebAPI web service controller that can be consumed by your front end.
@@ -18,8 +18,8 @@ namespace NotUsed.Controllers
     ///     2.) Must inherit AlchemyApiController.
     ///     3.) All Action methods must have an Http Verb attribute on it as well as a RouteAttribute (otherwise it won't generate a js proxy).
     /// </remarks>
-    [AlchemyRoutePrefix("NotUsedService")]
-    public class NotUsedServiceController : AlchemyApiController
+    [AlchemyRoutePrefix("LatestItemsService")]
+    public class LatestItemsServiceController : AlchemyApiController
     {
         // Dummy method needed, as I could not figure out how to get JS running properly without it.
         // TODO: Find a way to remove this dummy method.
@@ -44,20 +44,20 @@ namespace NotUsed.Controllers
             return output;
         }
 
-        // GET /Alchemy/Plugins/HelloExample/api/NotUsedService/NotUsedItems/tcm
+        // GET /Alchemy/Plugins/HelloExample/api/LatestItemsService/LatestItems/tcm
         /// <summary>
         /// Finds the list of items not being used within a given Tridion folder (given by tcm).
         /// object.
         /// </summary>
         /// <param name="tcmOfFolder">
-        /// The TCM ID of a Tridion folder within which to find items that are not used.
+        /// The TCM ID of a Tridion folder within which to find items that are latest items.
         /// Tridion
         /// <returns>
         /// Formatted HTML containing a list of unused items contained by the input folder.
         /// Tridion object
         /// </returns>
         [HttpGet]
-        [Route("NotUsedItems/{tcmOfFolder}/{startTime}/{endTime}")]
+        [Route("LatestItems/{tcmOfFolder}/{startTime}/{endTime}")]
         public string GetLatestItems(string tcmOfFolder, string startTime, string endTime = "")
         {
             // Create a new, null Core Service Client
@@ -78,7 +78,7 @@ namespace NotUsed.Controllers
                 string html = "<div class=\"usingItems results\" id=\"latestItemsList\">";
                 html += CreateItemsHeading();
 
-                // Create a filter to recursively search through a folder and find all schemas, components, templates, etc. that are not used.
+                // Create a filter to recursively search through a folder and find all schemas, components, templates, etc. that are latest items.
                 // TODO: Add support for ItemType.Keyword.
                 var filterData = new OrganizationalItemItemsFilterData();
                 filterData.ItemTypes = new[]{ItemType.Schema,

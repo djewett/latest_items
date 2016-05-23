@@ -1,6 +1,6 @@
 using Alchemy4Tridion.Plugins.GUI.Configuration;
 
-namespace NotUsed.Config
+namespace LatestItems.Config
 {
     /// <summary>
     /// Represents the <commandset /> gui ext configuration element for your extension. Contains references
@@ -14,11 +14,11 @@ namespace NotUsed.Config
     /// If your command uses another namespace convention, you'll have to use the 2nd argument to pass in your full
     /// interface name.
     /// </remarks>
-    public class NotUsedCommandSet : CommandSet
+    public class LatestItemsCommandSet : CommandSet
     {
-        public NotUsedCommandSet()
+        public LatestItemsCommandSet()
         {
-            AddCommand("NotUsed");
+            AddCommand("LatestItems");
         }
     }
 }

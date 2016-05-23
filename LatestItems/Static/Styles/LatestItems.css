@@ -1,4 +1,4 @@
-﻿.contextmenu #cm_notused > .image {
-    background-image: url('${ImgUrl}notusedicon.16x16.png');
+﻿.contextmenu #cm_latestitems > .image {
+    background-image: url('${ImgUrl}latestitemsicon.16x16.png');
     background-size: 16px;
 }

@@ -1,7 +1,7 @@
 ﻿<!doctype html>
 <html>
     <head runat="server">
-        <title>Not Used</title>
+        <title>Latest Items</title>
 		<link rel='shortcut icon' type='image/x-icon' href='${ImgUrl}favicon.png' />
     </head>
     <body>

@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("NotUsed")]
-[assembly: AssemblyDescription("Adds a new Not Used option to the context menu, enabling the user to quickly discover and remove unused components.")]
+[assembly: AssemblyTitle("LatestItems")]
+[assembly: AssemblyDescription("Adds a new Latest Items option to the context menu, enabling the user to quickly discover and remove unused components.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("NotUsed")]
+[assembly: AssemblyProduct("LatestItems")]
 [assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

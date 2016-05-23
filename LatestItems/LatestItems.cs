@@ -1,6 +1,6 @@
 using Alchemy4Tridion.Plugins;
 
-namespace Com.ContentBloom.NotUsed
+namespace Com.ContentBloom.LatestItems
 {
     /// <summary>
     /// Required entry class that represents your plugin. 
@@ -9,7 +9,7 @@ namespace Com.ContentBloom.NotUsed
     /// No overrides or anything is needed unless your plugin's functionality requires new
     /// methods or properties. Feel free to the class to your liking.
     /// </remarks>
-    public class NotUsed : AlchemyPluginBase
+    public class LatestItems : AlchemyPluginBase
     {
     }
 }
