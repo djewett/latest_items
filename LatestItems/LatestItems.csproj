@@ -7,8 +7,8 @@
     <ProjectGuid>{3EB758E8-074F-4DBB-AD91-CAE03FC7670B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NotUsed</RootNamespace>
-    <AssemblyName>NotUsed</AssemblyName>
+    <RootNamespace>LatestItems</RootNamespace>
+    <AssemblyName>LatestItems</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>cc967521</NuGetPackageImportStamp>
@@ -68,12 +68,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Config\NotUsedPopupResourceGroup.cs" />
-    <Compile Include="NotUsed.cs" />
-    <Compile Include="Config\NotUsedCommandSet.cs" />
-    <Compile Include="Config\NotUsedContextMenu.cs" />
-    <Compile Include="Config\NotUsedResourceGroup.cs" />
-    <Compile Include="Controllers\NotUsedServiceController.cs" />
+    <Compile Include="Config\LatestItemsPopupResourceGroup.cs" />
+    <Compile Include="LatestItems.cs" />
+    <Compile Include="Config\LatestItemsCommandSet.cs" />
+    <Compile Include="Config\LatestItemsContextMenu.cs" />
+    <Compile Include="Config\LatestItemsResourceGroup.cs" />
+    <Compile Include="Controllers\LatestItemsServiceController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -84,12 +84,12 @@
       <SubType>Designer</SubType>
     </Content>
     <Content Include="Static\Images\favicon.png" />
-    <Content Include="Static\Images\notusedicon.16x16.png" />
-    <Content Include="Static\Scripts\NotUsedPopup.js" />
-    <Content Include="Static\Scripts\NotUsedCommand.js" />
-    <Content Include="Static\Styles\NotUsed.css" />
-    <Content Include="Static\Styles\NotUsedPopup.css" />
-    <Content Include="Static\NotUsed.aspx">
+    <Content Include="Static\Images\latestitemsicon.16x16.png" />
+    <Content Include="Static\Scripts\LatestItemsPopup.js" />
+    <Content Include="Static\Scripts\LatestItemsCommand.js" />
+    <Content Include="Static\Styles\LatestItems.css" />
+    <Content Include="Static\Styles\LatestItemsPopup.css" />
+    <Content Include="Static\LatestItems.aspx">
       <SubType>ASPXCodeBehind</SubType>
     </Content>
   </ItemGroup>
