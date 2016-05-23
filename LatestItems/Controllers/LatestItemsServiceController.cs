@@ -1,5 +1,6 @@
 using Alchemy4Tridion.Plugins;
 using System;
+using System.Collections.Generic;
 using System.ServiceModel;
 using System.Threading;
 using System.Web;
@@ -30,16 +31,18 @@ namespace LatestItems.Controllers
             return "";
         }
 
-        [HttpGet]
-        [Route("ExportConfig/{listHtml}")]
-        public string GetExportConfig(string listHtml)
+        public class ExportConfigRequest { public string Input { get; set; } }
+
+        [HttpPost]
+        [Route("ExportConfig")]
+        public string GetExportConfig(ExportConfigRequest request)
         {
             //string n = String.Format("{0}", Request.Form["latestItemsList"]);
-            string[] tcms = listHtml.Split(',');
+            string[] tcms = request.Input.Split(','); // TODO: figure out a way to pass in an array of strings (it's tricky with the JS  $j(".item .id"), which returns the entire HTML elements when you only want the values...)
             string output = "";
-            foreach(var tcm in tcms)
+            foreach (var tcm in tcms)
             {
-                output += "tcm:" + tcm + System.Environment.NewLine;
+                output += tcm + System.Environment.NewLine;
             }
             return output;
         }

@@ -92,10 +92,10 @@
                 // Convert an array of all tcms to a string:
                 var theTcmString = $j(".item .id").text().toString();
                 // Replace the "tcm:" substrings with commas, since we can't pass ":"
-                theTcmString = theTcmString.replace(/tcm:/g, ",");
+                theTcmString = theTcmString.replace(/tcm:/g, ",tcm:");
                 // Remove the comma at the very beginning:
                 theTcmString = theTcmString.substr(1);
-                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig(theTcmString)
+                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig({ input: theTcmString })
                 .success(function (items) {
                     $j("#export_config_text").html(items);
                 })
