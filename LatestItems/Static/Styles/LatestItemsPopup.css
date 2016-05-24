@@ -127,3 +127,41 @@
 .timeLabel{
     float: left;
 }
+#refresh_items, .filterControl{
+    clear:both;
+}
+.stack-calc{
+    margin-left:3px;
+}
+#startDate .timeLabel{
+    margin-right: 4px;
+}
+#endDate .timeLabel{
+    margin-right: 11px;
+}
+#export_config_text{
+    float:left;
+    clear:both;
+    margin-left: 46px;
+}
+.filterControl{
+    margin-left: 46px;
+    padding: 4px;
+}
+.controls2{
+    border-left: thin solid #d3d3d3;
+    float: left;
+    padding-left: 20px;
+}
+#searchFilters{
+    padding-bottom: 32px;
+}
+#go_to_item_location{
+    margin-bottom: 32px;
+}
+#endDate_date{
+    margin-right: 4px;
+}
+#endDate{
+    margin-bottom: 22px;
+}
