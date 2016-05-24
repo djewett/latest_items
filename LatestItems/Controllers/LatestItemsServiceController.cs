@@ -131,13 +131,15 @@ namespace LatestItems.Controllers
                 //filter3.ModifiedAfter = Convert.ToDateTime("05/20/16");
                 //filter3.ModifiedAfter = DateTime.Now.AddDays(-1);
 
+                // TODO: Add check for valid start and end times:
+
                 if (String.IsNullOrEmpty(startTime))
                 {
                     filter3.ModifiedAfter = DateTime.Now.AddDays(-1);
                 }
                 else
                 {
-                    filter3.ModifiedAfter = Convert.ToDateTime(startTime.Replace('-', '/'));
+                    filter3.ModifiedAfter = Convert.ToDateTime(startTime.Replace('-', '/').Replace('~', ':'));
                 }
 
                 if(String.IsNullOrEmpty(endTime))
@@ -146,8 +148,10 @@ namespace LatestItems.Controllers
                 }
                 else
                 {
-                    filter3.ModifiedBefore = Convert.ToDateTime(endTime.Replace('-','/'));
+                    filter3.ModifiedBefore = Convert.ToDateTime(endTime.Replace('-', '/').Replace('~', ':'));
                 }
+
+                filter3.IncludeLocationInfoColumns = true;
                 //var results = client.GetSearchResults(filter);
 
                 //////var items = client.GetSearchResults(filter3);
@@ -159,10 +163,16 @@ namespace LatestItems.Controllers
 
                 foreach (IdentifiableObjectData item in client.GetSearchResults(filter3))
                 {
+                    string path = "";
+                    if(item is RepositoryLocalObjectData)
+                    {
+                        path = ((RepositoryLocalObjectData)item).LocationInfo.Path;
+                    }
+
                     string currItemHtml = "<div class=\"item\">";
                     //currItemHtml += "<div class=\"icon\" style=\"background-image: url(/WebUI/Editors/CME/Themes/Carbon2/icon_v7.1.0.66.627_.png?name=" + item.Title + "&size=16)\"></div>";
                     currItemHtml += "<div class=\"name\">" + item.Title + "</div>";
-                    currItemHtml += "<div class=\"path\">" + "TODO" + "</div>"; // TODO: retrieve correct path
+                    currItemHtml += "<div class=\"path\">" + path + "</div>"; // TODO: retrieve correct path
                     currItemHtml += "<div class=\"id\">" + item.Id + "</div>";
                     currItemHtml += "</div>";
 

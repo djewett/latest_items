@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Config\LatestItemsPopupResourceGroup.cs" />
+    <Compile Include="Config\LatestItemsRibbon.cs" />
     <Compile Include="LatestItems.cs" />
     <Compile Include="Config\LatestItemsCommandSet.cs" />
     <Compile Include="Config\LatestItemsContextMenu.cs" />
@@ -82,6 +83,9 @@
   <ItemGroup>
     <Content Include="a4t.xml">
       <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Static\Controls\LatestItemsGroup.ascx">
+      <SubType>ASPXCodeBehind</SubType>
     </Content>
     <Content Include="Static\Images\favicon.png" />
     <Content Include="Static\Images\latestitemsicon.16x16.png" />

@@ -69,7 +69,10 @@
                 $j(".tab-body.active").html("");
                 $j(".tab-body.active").append("<progress id=\"progBar\"></progress>");
                 // Call the same getLatestItems() Web API function that is used when the popup is first open.
-                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItems(tcmInput, $j("#startDate_date").val(), $j("#endDate_date").val())
+                // TODO: Use POST, instead of string replacements to pass via query with GET:
+                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItems(tcmInput,
+                                                                                       $j("#startDate_date").val() + " " + $j("#startDate_time").val().replace(/:/g, "~"),
+                                                                                       $j("#endDate_date").val() + " " + $j("#endDate_time").val().replace(/:/g, "~"))
                 .success(function (items) {
                     // Upon successful retrieval of latest items, we want to remove the progress bar and add the latest items to the markup.
                     $j("#progBar").remove();

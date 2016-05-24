@@ -124,3 +124,6 @@
 .button.enabled{
 	cursor: pointer;
 }
+.timeLabel{
+    float: left;
+}
