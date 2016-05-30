@@ -1,6 +1,5 @@
 ﻿body{
 	background-color: #ebedf0;
-    padding-top:15px;
 }
 .tabs{
     font-family: Helvetica,Arial,sans-serif;
@@ -9,6 +8,7 @@
 	margin-bottom: -1px; 
 	position: relative;
 	margin-left: 15px;
+    margin-top: 15px;
 }
 .tabs>div {
     cursor: pointer;
@@ -164,4 +164,7 @@
 }
 #endDate{
     margin-bottom: 22px;
+}
+#startDate{
+    padding-top: 0px;
 }

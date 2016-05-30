@@ -31,20 +31,111 @@ namespace LatestItems.Controllers
             return "";
         }
 
-        public class ExportConfigRequest { public string Input { get; set; } }
+        public class ExportConfigRequest { public string input { get; set; } }
 
         [HttpPost]
         [Route("ExportConfig")]
         public string GetExportConfig(ExportConfigRequest request)
         {
             //string n = String.Format("{0}", Request.Form["latestItemsList"]);
-            string[] tcms = request.Input.Split(','); // TODO: figure out a way to pass in an array of strings (it's tricky with the JS  $j(".item .id"), which returns the entire HTML elements when you only want the values...)
+            string[] tcms = request.input.Split(','); // TODO: figure out a way to pass in an array of strings (it's tricky with the JS  $j(".item .id"), which returns the entire HTML elements when you only want the values...)
             string output = "";
             foreach (var tcm in tcms)
             {
                 output += tcm + System.Environment.NewLine;
             }
             return output;
+        }
+
+        public class LatestItemsRequest { public string tcmOfFolder { get; set; }
+                                          public string startTime { get; set; }
+                                          public string endTime { get; set; } }
+
+        [HttpPost]
+        [Route("LatestItems/{tcmOfFolder}")]
+        public string GetLatestItems(LatestItemsRequest request)
+        {
+            // Create a new, null Core Service Client
+            SessionAwareCoreServiceClient client = null;
+            // TODO: Use Client, not client (then you don't have to worry about handling abort/dispose/etc.). <- Alchemy version 7.0 or higher
+            // With Client, no need to call client.Abort();
+            // Can we also remove catch block below if using Client?
+
+            try
+            {
+                // Creates a new core service client
+                client = new SessionAwareCoreServiceClient("netTcp_2013");
+                // Gets the current user so we can impersonate them for our client
+                string username = GetUserName();
+                client.Impersonate(username);
+
+                // Start building up a string of html to return, including headings for the table that the html will represent.
+                string html = "<div class=\"usingItems results\" id=\"latestItemsList\">";
+                html += CreateItemsHeading();
+
+                SearchQueryData filter3 = new SearchQueryData();
+
+                // TODO: Add check for valid start and end times:
+
+                if (String.IsNullOrEmpty(request.startTime))
+                {
+                    filter3.ModifiedAfter = DateTime.Now.AddDays(-1);
+                }
+                else
+                {
+                    filter3.ModifiedAfter = Convert.ToDateTime(request.startTime);
+                }
+
+                if (String.IsNullOrEmpty(request.endTime))
+                {
+                    filter3.ModifiedBefore = DateTime.Now;
+                }
+                else
+                {
+                    filter3.ModifiedBefore = Convert.ToDateTime(request.endTime);
+                }
+                filter3.IncludeLocationInfoColumns = true;
+                filter3.SearchIn = new LinkToIdentifiableObjectData { IdRef = "tcm:0-1006-1"/*tcmOfFolder*/ };
+
+                foreach (IdentifiableObjectData item in client.GetSearchResults(filter3))
+                {
+                    string path = "";
+                    if (item is RepositoryLocalObjectData)
+                    {
+                        path = ((RepositoryLocalObjectData)item).LocationInfo.Path;
+                    }
+
+                    string currItemHtml = "<div class=\"item\">";
+                    //currItemHtml += "<div class=\"icon\" style=\"background-image: url(/WebUI/Editors/CME/Themes/Carbon2/icon_v7.1.0.66.627_.png?name=" + item.Title + "&size=16)\"></div>";
+                    currItemHtml += "<div class=\"name\">" + item.Title + "</div>";
+                    currItemHtml += "<div class=\"path\">" + path + "</div>";
+                    currItemHtml += "<div class=\"id\">" + item.Id + "</div>";
+                    currItemHtml += "</div>";
+
+                    html += currItemHtml;
+                }
+
+                // Close the div we opened above
+                html += "</div>";
+
+                // Explicitly abort to ensure there are no memory leaks.
+                client.Abort();
+
+                // Return the html we've built.
+                return html;
+            }
+            catch (Exception ex)
+            {
+                // Proper way of ensuring that the client gets closed... we close it in our try block above,
+                // then in a catch block if an exception is thrown we abort it.
+                if (client != null)
+                {
+                    client.Abort();
+                }
+
+                // We are rethrowing the original exception and just letting webapi handle it.
+                throw ex;
+            }
         }
 
         // GET /Alchemy/Plugins/HelloExample/api/LatestItemsService/LatestItems/tcm
@@ -61,7 +152,7 @@ namespace LatestItems.Controllers
         /// </returns>
         [HttpGet]
         [Route("LatestItems/{tcmOfFolder}/{startTime}/{endTime}")]
-        public string GetLatestItems(string tcmOfFolder, string startTime, string endTime = "")
+        public string GetLatestItemsOld(string tcmOfFolder, string startTime, string endTime = "")
         {
             // Create a new, null Core Service Client
             SessionAwareCoreServiceClient client = null;
@@ -154,12 +245,24 @@ namespace LatestItems.Controllers
                 filter3.IncludeLocationInfoColumns = true;
                 //var results = client.GetSearchResults(filter);
 
+                //filter3.FromRepository = new LinkToRepositoryData() { Title = "Building Blocks", IdRef = "tcm:0-1006-1" };
+                filter3.SearchIn = new LinkToIdentifiableObjectData { IdRef = "tcm:0-1006-1"/*tcmOfFolder*/ };
+
                 //////var items = client.GetSearchResults(filter3);
 
                 //////if(items.Length > 0)
                 //////{
                 //////    html += CreateItemsHeading();
                 //////}
+
+                //filter2.ItemTypes = new[]{//ItemType.Schema,
+                //                             ItemType.Component,
+                //                             //ItemType.TemplateBuildingBlock,
+                //                             //ItemType.ComponentTemplate,
+                //                             //ItemType.PageTemplate,
+                //                             ItemType.Publication,
+                //                                ItemType.Folder,
+                //ItemType.Category};
 
                 foreach (IdentifiableObjectData item in client.GetSearchResults(filter3))
                 {

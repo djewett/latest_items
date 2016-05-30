@@ -39,9 +39,9 @@ Alchemy.command("${PluginName}", "LatestItems", {
         // Gets the selected item in Tridion GUI
         var items = selection.getItems();
         var item = $models.getItem(selection.getItem(0));
-        // Checks if a single folder (tcm:2) item has been selected.
-        // TODO: Add support for categories (tcm:512)
-        if (items.length == 1 && ((item.getItemType() == 'tcm:1') || (item.getItemType() == 'tcm:2'))) {
+        // Checks if a single publication (tcm:1) or folder (tcm:2) item has been selected.
+        if ($models.isContainerItemType(item.getItemType())) {
+        //if (items.length == 1 && ((item.getItemType() == 'tcm:1') || (item.getItemType() == 'tcm:2'))) {
             return true;
         }
         else {
@@ -65,7 +65,7 @@ Alchemy.command("${PluginName}", "LatestItems", {
             // Find a way to get what's selected in left panel, as normally that only shows up if something is selected in the right panel as well...
         }
         // Creates a popup with the above URL
-        var popup = $popup.create(url, "menubar=no,location=no,resizable=no,scrollbars=no,status=no,width=700,height=450,top=10,left=10", null);
+        var popup = $popup.create(url, "menubar=no,location=no,resizable=no,scrollbars=no,status=no,width=700,height=910,top=10,left=10", null);
         popup.open();
     }
 });

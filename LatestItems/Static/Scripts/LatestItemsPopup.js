@@ -14,6 +14,18 @@
     var url = location.href;
     var tcm = url.substring(url.indexOf("uri=tcm%3A") + 10, url.indexOf("#"));
 
+
+
+
+
+    // DJ added:
+    //$tcmutils.getPublicationIdFromItemId(tcm)
+    //$j("#publicationUrl").val("tcm:" + tcm);
+
+
+
+
+
     // On page load I display the items not in use within the folder defined by tcm.
     updateLatestItems(tcm);
 
@@ -35,6 +47,18 @@
         // TODO: Try to remove this dummy method call
         Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getDummyItems()
         .success(function (items) {
+
+            // Currently, tcm:0 is entered in cases where no folder or publication is selected, when either the context menu or ribbon bar is used
+            // to load the Latest Items popup:
+            if ((tcmInput != "0") && (tcmInput != "")) {
+                var pubTitle = $models.getItem("tcm:" + tcmInput).getPublication().getStaticTitle();
+                $j("#publicationUrl").val(pubTitle);
+            }
+
+            if ($models.isContainerItemType($models.getItem("tcm:" + tcmInput).getItemType()))
+            {
+                $j("#folderId").val("xxx");
+            }
 
             // First arg in success is what's returned by your controller's action
 
@@ -70,9 +94,12 @@
                 $j(".tab-body.active").append("<progress id=\"progBar\"></progress>");
                 // Call the same getLatestItems() Web API function that is used when the popup is first open.
                 // TODO: Use POST, instead of string replacements to pass via query with GET:
-                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItems(tcmInput,
-                                                                                       $j("#startDate_date").val() + " " + $j("#startDate_time").val().replace(/:/g, "~"),
-                                                                                       $j("#endDate_date").val() + " " + $j("#endDate_time").val().replace(/:/g, "~"))
+                //Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItemsOld(tcmInput,
+                //                                                                       $j("#startDate_date").val() + " " + $j("#startDate_time").val().replace(/:/g, "~"),
+                //                                                                       $j("#endDate_date").val() + " " + $j("#endDate_time").val().replace(/:/g, "~"))
+                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItems({tcmOfFolder: tcmInput,
+                                                                                        startTime: $j("#startDate_date").val() + " " + $j("#startDate_time").val(),
+                                                                                        endTime: $j("#endDate_date").val() + " " + $j("#endDate_time").val()})
                 .success(function (items) {
                     // Upon successful retrieval of latest items, we want to remove the progress bar and add the latest items to the markup.
                     $j("#progBar").remove();
