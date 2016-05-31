@@ -19,6 +19,7 @@ namespace LatestItems.Config
         public LatestItemsCommandSet()
         {
             AddCommand("LatestItems");
+            AddCommand("LatestItemsContextMenu");
         }
     }
 }

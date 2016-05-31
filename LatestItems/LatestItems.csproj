@@ -89,6 +89,7 @@
     </Content>
     <Content Include="Static\Images\favicon.png" />
     <Content Include="Static\Images\latestitemsicon.16x16.png" />
+    <Content Include="Static\Scripts\LatestItemsCommandContextMenu.js" />
     <Content Include="Static\Scripts\LatestItemsPopup.js" />
     <Content Include="Static\Scripts\LatestItemsCommand.js" />
     <Content Include="Static\Styles\LatestItems.css" />

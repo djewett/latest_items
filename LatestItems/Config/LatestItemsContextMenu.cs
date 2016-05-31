@@ -13,16 +13,16 @@ namespace LatestItems.Config
         public LatestItemsContextMenu()
         {
             // This is the id which gets put on the html element for this menu (to target with css/js).
-            AssignId = "LatestItems";
+            AssignId = "LatestItemsContextMenu";
 
             // The name of the extension menu
-            Name = "LatestItemsdMenu";
+            Name = "LatestItemsMenu";
 
             // Where to add the new menu in the current context menu.
             InsertBefore = Constants.ContextMenuIds.MainContextMenu.Separator7;
             
             // Generate all of the context menu items...
-            AddItem("cm_latestitems", "Latet Items...", "LatestItems");
+            AddItem("cm_latestitems", "Latest Items...", "LatestItemsContextMenu");
 
             // We need to add our resource group as a dependency to this extension
             Dependencies.Add<LatestItemsResourceGroup>();

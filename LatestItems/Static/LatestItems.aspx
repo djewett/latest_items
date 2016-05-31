@@ -44,11 +44,11 @@
                 </div>
                 <div class="filterControl stack vertical">
                     <label>Folder ID (partial TCM):</label>
-	                <input id="folderId" class="stack-calc" type="text" style="width: 138px;" value="2118" />
+	                <input id="folderId" class="stack-calc" type="text" style="width: 138px;" value="" />
                 </div>
                 <div class="filterControl stack vertical">
                     <label>User:</label>
-	                <input id="userId" class="stack-calc" type="text" style="width: 242px;" value="WIN-DFMAJQHT95L\Administrator" />
+	                <input id="userId" class="stack-calc" type="text" style="width: 242px;" value="AAAAAAAA" />
                 </div>
 	        </div>
             <div id="exportControls">

@@ -15,6 +15,7 @@ namespace LatestItems.Config
         {
             // When adding files you only need to specify the filename and not full path
             AddFile("LatestItemsCommand.js");
+            AddFile("LatestItemsCommandContextMenu.js");
             AddFile("LatestItems.css");
 
             // When referencing commandsets you can just use the generic AddFile with your CommandSet as the type.

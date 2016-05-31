@@ -60,6 +60,9 @@
                 $j("#folderId").val("xxx");
             }
 
+            var user = Tridion.UI.UserSettings.getJsonUserSettings(true).User.Data.Name;
+            $j("#userId").val(user);
+
             var now = new Date();
             var nowMonth = now.getMonth() + 1;
             $j("#endDate_date").val(nowMonth + "/" + now.getDate() + "/" + now.getFullYear());
