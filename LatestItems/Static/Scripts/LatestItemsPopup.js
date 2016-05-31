@@ -60,6 +60,38 @@
                 $j("#folderId").val("xxx");
             }
 
+            var now = new Date();
+            var nowMonth = now.getMonth() + 1;
+            $j("#endDate_date").val(nowMonth + "/" + now.getDate() + "/" + now.getFullYear());
+            var nowHours = now.getHours();
+            var ampm = nowHours >= 12 ? 'PM' : 'AM'; // Needs to be done before nowHours are manipulated
+            nowHours = nowHours % 12;
+            nowHours = nowHours ? nowHours : 12; // the hour '0' should be '12'
+            var nowMinutes = now.getMinutes();
+            nowMinutes = nowMinutes < 10 ? '0' + nowMinutes : nowMinutes;
+            var nowSeconds = now.getSeconds();
+            nowSeconds = nowSeconds < 10 ? '0' + nowSeconds : nowSeconds;
+            var nowTime = nowHours + ":" + nowMinutes + ":" + nowSeconds + " " + ampm;
+            $j("#endDate_time").val(nowTime);
+
+            var yesterday = new Date();
+            yesterday.setDate(now.getDate() - 1);
+            var yestMonth = yesterday.getMonth() + 1;
+            $j("#startDate_date").val(yestMonth + "/" + yesterday.getDate() + "/" + yesterday.getFullYear());
+            // Time will always be the exact same as now:
+            $j("#startDate_time").val(nowTime);
+
+            //////function formatAMPM(date) {
+            //////    var hours = date.getHours();
+            //////    var minutes = date.getMinutes();
+            //////    var ampm = hours >= 12 ? 'pm' : 'am';
+            //////    hours = hours % 12;
+            //////    hours = hours ? hours : 12; // the hour '0' should be '12'
+            //////    minutes = minutes < 10 ? '0' + minutes : minutes;
+            //////    var strTime = hours + ':' + minutes + ' ' + ampm;
+            //////    return strTime;
+            //////}
+
             // First arg in success is what's returned by your controller's action
 
             // Upon successful retrieval of latest items, we want to remove the progress bar and add the latest items to the markup

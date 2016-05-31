@@ -20,8 +20,8 @@
                 <div class="button" id="refresh_items"><span class="text">Find Latest</span></div>
                 <div id="startDate" class="filterControl stack vertical">
                     <label class="timeLabel">Start Time:</label>
-	                <input id="startDate_date" class="stack-calc" type="text" style="width: 99px;" value="5/21/2016" />
-	                <input id="startDate_time" class="stack-calc" type="text" style="width: 100px;" value="12:00:00 AM">
+	                <input id="startDate_date" class="stack-calc" type="text" style="width: 99px;" value="" />
+	                <input id="startDate_time" class="stack-calc" type="text" style="width: 100px;" value="">
                     <!--
 	                <div id="startDate_selectbutton" class="tridion button stack-elem select" style="-webkit-user-select: none;">
 		                <span class="text">Select Date</span>
@@ -30,8 +30,8 @@
                 </div>
                 <div id="endDate" class=" filterControl date stack vertical">
                     <label class="timeLabel">End Time:</label>
-	                <input id="endDate_date" class="stack-calc" type="text" style="width: 99px;" value="5/24/2016" />
-	                <input id="endDate_time" class="stack-calc" type="text" style="width: 100px;" value="12:00:00 AM">
+	                <input id="endDate_date" class="stack-calc" type="text" style="width: 99px;" value="" />
+	                <input id="endDate_time" class="stack-calc" type="text" style="width: 100px;" value="">
                     <!--
 	                <div id="endDate_selectbutton" class="tridion button stack-elem select" style="-webkit-user-select: none;">
 		                <span class="text">Select Date</span>
