@@ -7,6 +7,10 @@ using System.Web;
 using System.Web.Http;
 using System.Xml.Linq;
 using Tridion.ContentManager.CoreService.Client;
+using Tridion.ContentManager.ImportExport.Client;
+using Tridion.ContentManager.ImportExport;
+using System.Security.Principal;
+using System.ServiceModel.Channels;
 
 namespace LatestItems.Controllers
 {
@@ -37,14 +41,74 @@ namespace LatestItems.Controllers
         [Route("ExportConfig")]
         public string GetExportConfig(ExportConfigRequest request)
         {
-            //string n = String.Format("{0}", Request.Form["latestItemsList"]);
-            string[] tcms = request.input.Split(','); // TODO: figure out a way to pass in an array of strings (it's tricky with the JS  $j(".item .id"), which returns the entire HTML elements when you only want the values...)
+            string[] tcms = request.input.Split(','); 
             string output = "";
             foreach (var tcm in tcms)
             {
                 output += tcm + System.Environment.NewLine;
             }
-            return output;
+
+            var output2 = "";
+
+            var selection = new Selection[] { new ItemsSelection(tcms) };
+            //SessionAwareCoreServiceClient client = null;
+            try
+            {
+                // Creates a new core service client
+                //client = new SessionAwareCoreServiceClient("netTcp_2013");
+                // From Tridion.ContentManager.ImportExport.Client.dll.config: http://localhost/webservices/ImportExportService2013.svc/basicHttp"
+
+                var endpointIdentity = EndpointIdentity.CreateUpnIdentity(System.Web.HttpContext.Current.User.Identity.Name);//"WIN-DFMAJQHT95L\\Administrator"); //WindowsIdentity.GetCurrent().Name);
+               
+                var endpointAddress = new EndpointAddress(new Uri("http://localhost:81/webservices/ImportExportService2013.svc/basicHttp"),
+                                                          endpointIdentity, 
+                                                          new AddressHeader[0]{});
+
+               //var endpointAddress = new EndpointAddress("http://localhost:81/webservices/ImportExportService2013.svc/basicHttp");
+
+                //output2 += "USER: " + System.Web.HttpContext.Current.User.Identity.Name;
+
+               // var security = BasicHttpSecurityMode.TransportCredentialOnly;
+               // output2 += "security: " + security.ToString() + System.Environment.NewLine; 
+                //security.
+                var binding = new BasicHttpBinding();//security);
+                binding.Name = "ImportExport_basicHttpBinding";
+                binding.Security.Mode = BasicHttpSecurityMode.TransportCredentialOnly;
+                binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.Windows;
+                //binding.Security.Transport.
+               
+                //BasicHttpBinding b = new BasicHttpBinding();
+                //b.Security.Mode = BasicHttpSecurityMode.Transport;
+                //b.Security.Transport.ClientCredentialType = HttpClientCredentialType.Windows;
+
+                //ImportExportServiceClient importExportClient = new ImportExportServiceClient("basicHttp_2013", endpointAddress);
+               // var importExportClient = new ImportExportServiceClient(new BasicHttpBinding("basicHttp_2013"), endpointAddress);
+
+                var importExportClient = new ImportExportServiceClient(binding, endpointAddress);
+                //importExportClient.
+
+                //var importExportClient = new ImportExportServiceClient(new System.ServiceModel.Channels.Binding(), endpointAddress);
+                //var client = new ImportExportServiceClient();
+
+                
+                var exportInstruction = new ExportInstruction()
+                {
+                    LogLevel = LogLevel.Normal,
+                    BluePrintMode = BluePrintMode.ExportSharedItemsFromOwningPublication,
+                    //ExpandDependenciesOfTypes = IncludeDependencyTypes
+                };
+                
+
+                var processId = importExportClient.StartExport(selection, exportInstruction);
+
+                output2 += "export maybe worked";
+            }
+            catch(Exception e)
+            {
+                output2 += "export didn't work: " + e.ToString();
+            }
+
+            return output2;
         }
 
         public class LatestItemsRequest { public string tcmOfFolder { get; set; }
