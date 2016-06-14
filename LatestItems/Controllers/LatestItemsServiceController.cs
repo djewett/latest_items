@@ -11,6 +11,8 @@ using Tridion.ContentManager.ImportExport.Client;
 using Tridion.ContentManager.ImportExport;
 using System.Security.Principal;
 using System.ServiceModel.Channels;
+using System.Net;
+using System.IO;
 
 namespace LatestItems.Controllers
 {
@@ -41,74 +43,107 @@ namespace LatestItems.Controllers
         [Route("ExportConfig")]
         public string GetExportConfig(ExportConfigRequest request)
         {
-            string[] tcms = request.input.Split(','); 
+            string[] tcms = request.input.Split(',');
+
             string output = "";
-            foreach (var tcm in tcms)
-            {
-                output += tcm + System.Environment.NewLine;
-            }
 
-            var output2 = "";
-
-            var selection = new Selection[] { new ItemsSelection(tcms) };
-            //SessionAwareCoreServiceClient client = null;
             try
             {
-                // Creates a new core service client
-                //client = new SessionAwareCoreServiceClient("netTcp_2013");
-                // From Tridion.ContentManager.ImportExport.Client.dll.config: http://localhost/webservices/ImportExportService2013.svc/basicHttp"
-
-                var endpointIdentity = EndpointIdentity.CreateUpnIdentity(System.Web.HttpContext.Current.User.Identity.Name);//"WIN-DFMAJQHT95L\\Administrator"); //WindowsIdentity.GetCurrent().Name);
-               
-                var endpointAddress = new EndpointAddress(new Uri("http://localhost:81/webservices/ImportExportService2013.svc/basicHttp"),
-                                                          endpointIdentity, 
-                                                          new AddressHeader[0]{});
-
-               //var endpointAddress = new EndpointAddress("http://localhost:81/webservices/ImportExportService2013.svc/basicHttp");
-
-                //output2 += "USER: " + System.Web.HttpContext.Current.User.Identity.Name;
-
-               // var security = BasicHttpSecurityMode.TransportCredentialOnly;
-               // output2 += "security: " + security.ToString() + System.Environment.NewLine; 
-                //security.
-                var binding = new BasicHttpBinding();//security);
+                // These settings are taken from Tridion.ContentManager.ImportExport.Common.dll. Normally, these would be entered in a web.config file, 
+                // or similar, and pull in here simply by referencing the binding/endpoint in that config. But since there is no such file for this 
+                // Alchemy plugin, we opt set these up here.
+                var endpointAddress = new EndpointAddress(new Uri("http://localhost:81/webservices/ImportExportService2013.svc/basicHttp"));
+                var binding = new BasicHttpBinding();
                 binding.Name = "ImportExport_basicHttpBinding";
                 binding.Security.Mode = BasicHttpSecurityMode.TransportCredentialOnly;
                 binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.Windows;
-                //binding.Security.Transport.
-               
-                //BasicHttpBinding b = new BasicHttpBinding();
-                //b.Security.Mode = BasicHttpSecurityMode.Transport;
-                //b.Security.Transport.ClientCredentialType = HttpClientCredentialType.Windows;
-
-                //ImportExportServiceClient importExportClient = new ImportExportServiceClient("basicHttp_2013", endpointAddress);
-               // var importExportClient = new ImportExportServiceClient(new BasicHttpBinding("basicHttp_2013"), endpointAddress);
 
                 var importExportClient = new ImportExportServiceClient(binding, endpointAddress);
-                //importExportClient.
+                importExportClient.ClientCredentials.UseIdentityConfiguration = true;
+                importExportClient.ChannelFactory.Credentials.UseIdentityConfiguration = true;
+                // TODO: take these credentials in from text field on GUI:
+                var credentials = new NetworkCredential("Administrator", "xxxxxx");
+                importExportClient.ChannelFactory.Credentials.Windows.ClientCredential = credentials;
 
-                //var importExportClient = new ImportExportServiceClient(new System.ServiceModel.Channels.Binding(), endpointAddress);
-                //var client = new ImportExportServiceClient();
-
-                
+                // TODO: Work on these settings
+                // e.g. June Test Comp 2016 goes in package twice for some reason, currently (even though it's not localized, etc.):
                 var exportInstruction = new ExportInstruction()
                 {
                     LogLevel = LogLevel.Normal,
                     BluePrintMode = BluePrintMode.ExportSharedItemsFromOwningPublication,
                     //ExpandDependenciesOfTypes = IncludeDependencyTypes
                 };
-                
+
+                var selection = new Selection[] { new ItemsSelection(tcms) };
 
                 var processId = importExportClient.StartExport(selection, exportInstruction);
 
-                output2 += "export maybe worked";
+                var processState = WaitForProcessFinish(importExportClient, processId);
+
+                if (processState == ProcessState.Finished)
+                {
+                    // Use the same credentials as the above client
+                    // TODO: take in packageLocation from a text field in the GUI:
+                    DownloadPackage(processId, @"C:\Packages\ChildPublication.zip", credentials);
+                }
+
+                output += "Export succeeded";
             }
             catch(Exception e)
             {
-                output2 += "export didn't work: " + e.ToString();
+                output += e.ToString() + System.Environment.NewLine + System.Environment.NewLine + e.StackTrace;
             }
 
-            return output2;
+            return output;
+        }
+
+        private ProcessState WaitForProcessFinish(ImportExportServiceClient client, string processId)
+        {
+            do
+            {
+                Thread.Sleep(1000);
+                ProcessState? processState = client.GetProcessState(processId);
+
+                if (processState == ProcessState.Finished ||
+                    processState == ProcessState.Aborted ||
+                    processState == ProcessState.AbortedByUser)
+                {
+                    return processState.Value;
+                }
+            }
+            while (true);
+        }
+
+        private void DownloadPackage(string processId, string packageLocation, NetworkCredential credentials)
+        {
+            // These settings are taken from Tridion.ContentManager.ImportExport.Common.dll:
+            var endpointAddress = new EndpointAddress(new Uri("http://localhost:81/webservices/ImportExportService2013.svc/streamDownload_basicHttp"));
+            var binding = new BasicHttpBinding();
+            binding.Name = "streamDownload_basicHttp_2013";
+            binding.Security.Mode = BasicHttpSecurityMode.TransportCredentialOnly;
+            binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.Windows;
+            binding.MessageEncoding = WSMessageEncoding.Mtom;
+
+            var downloadClient = new ImportExportStreamDownloadClient(binding, endpointAddress);
+            downloadClient.ClientCredentials.UseIdentityConfiguration = true; // TODO: this line needed?
+            downloadClient.ChannelFactory.Credentials.UseIdentityConfiguration = true; // TODO: this line needed?
+            downloadClient.ChannelFactory.Credentials.Windows.ClientCredential = credentials;
+
+            //using (var logStream = downloadClient.DownloadProcessLogFile(processId, true))
+            //{
+            //    using (var fileStream = File.Create(@"C:\Packages\log.txt"))
+            //    {
+            //        logStream.CopyTo(fileStream);
+            //    }
+            //}
+
+            using (var packageStream = downloadClient.DownloadPackage(processId, deleteFromServerAfterDownload: true))
+            {
+                using (var fileStream = File.Create(packageLocation))
+                {
+                    packageStream.CopyTo(fileStream);
+                }
+            }
         }
 
         public class LatestItemsRequest { public string tcmOfFolder { get; set; }
