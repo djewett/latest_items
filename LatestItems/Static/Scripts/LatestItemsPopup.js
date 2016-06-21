@@ -52,16 +52,18 @@
             // to load the Latest Items popup:
             if ((tcmInput != "0") && (tcmInput != "")) {
                 var pubTitle = $models.getItem("tcm:" + tcmInput).getPublication().getStaticTitle();
-                $j("#publicationUrl").val(pubTitle);
+                $j("#publicationName").val(pubTitle);
             }
 
             if ($models.isContainerItemType($models.getItem("tcm:" + tcmInput).getItemType()))
             {
-                $j("#folderId").val("xxx");
+                $j("#folderId").val("");
             }
 
             var user = Tridion.UI.UserSettings.getJsonUserSettings(true).User.Data.Name;
             $j("#userId").val(user);
+
+            $j("#exportUser").val(user);
 
             var now = new Date();
             var nowMonth = now.getMonth() + 1;
@@ -132,7 +134,9 @@
                 //Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItemsOld(tcmInput,
                 //                                                                       $j("#startDate_date").val() + " " + $j("#startDate_time").val().replace(/:/g, "~"),
                 //                                                                       $j("#endDate_date").val() + " " + $j("#endDate_time").val().replace(/:/g, "~"))
-                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItems({tcmOfFolder: tcmInput,
+                // Note: tcmOfContainer can be for a publication, folder, structure group, etc.
+                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItems({tcmOfContainer: tcmInput,
+                                                                                        publication: $j("#publicationName").val(),
                                                                                         startTime: $j("#startDate_date").val() + " " + $j("#startDate_time").val(),
                                                                                         endTime: $j("#endDate_date").val() + " " + $j("#endDate_time").val()})
                 .success(function (items) {
@@ -160,7 +164,8 @@
                 theTcmString = theTcmString.replace(/tcm:/g, ",tcm:");
                 // Remove the comma at the very beginning:
                 theTcmString = theTcmString.substr(1);
-                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig({ input: theTcmString })
+                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig({input: theTcmString,
+                                                                        outputFileWithPath: $j("#exportPackage").val()})
                 .success(function (items) {
                     $j("#export_config_text").html(items);
                 })

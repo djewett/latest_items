@@ -13,6 +13,7 @@ using System.Security.Principal;
 using System.ServiceModel.Channels;
 using System.Net;
 using System.IO;
+using System.Reflection;
 
 namespace LatestItems.Controllers
 {
@@ -37,7 +38,8 @@ namespace LatestItems.Controllers
             return "";
         }
 
-        public class ExportConfigRequest { public string input { get; set; } }
+        public class ExportConfigRequest { public string input { get; set; }
+                                           public string outputFileWithPath { get; set; } }
 
         [HttpPost]
         [Route("ExportConfig")]
@@ -61,9 +63,21 @@ namespace LatestItems.Controllers
                 var importExportClient = new ImportExportServiceClient(binding, endpointAddress);
                 importExportClient.ClientCredentials.UseIdentityConfiguration = true;
                 importExportClient.ChannelFactory.Credentials.UseIdentityConfiguration = true;
-                // TODO: take these credentials in from text field on GUI:
-                var credentials = new NetworkCredential("Administrator", "xxxxxx");
+
+                // Remove "BIN/":
+                string assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                assemblyPath = assemblyPath.Substring(0, assemblyPath.Length - 4);
+                string path = Path.Combine(assemblyPath, @"assets\export_credentials.txt");
+                string[] files = File.ReadAllLines(path);
+                // Remove "user=" from files[0] and "password=" from files[1] to get the credentials.
+                string user = files[0].Substring(5);
+                string password = files[1].Substring(9);
+                var credentials = new NetworkCredential(user, password);//"Administrator", "xxxxxxx");
                 importExportClient.ChannelFactory.Credentials.Windows.ClientCredential = credentials;
+
+                // No Impersonate() method available here:
+                //string username = GetUserName();
+                //importExportClient.ClientCredentials.Impersonate(username);
 
                 // TODO: Work on these settings
                 // e.g. June Test Comp 2016 goes in package twice for some reason, currently (even though it's not localized, etc.):
@@ -83,11 +97,11 @@ namespace LatestItems.Controllers
                 if (processState == ProcessState.Finished)
                 {
                     // Use the same credentials as the above client
-                    // TODO: take in packageLocation from a text field in the GUI:
-                    DownloadPackage(processId, @"C:\Packages\ChildPublication.zip", credentials);
+                    // TODO: validate outputFileWithPath
+                    DownloadPackage(processId, request.outputFileWithPath, credentials); // @"C:\Packages\exported.zip", credentials);
                 }
 
-                output += "Export succeeded";
+                output += "Export complete";
             }
             catch(Exception e)
             {
@@ -129,14 +143,6 @@ namespace LatestItems.Controllers
             downloadClient.ChannelFactory.Credentials.UseIdentityConfiguration = true; // TODO: this line needed?
             downloadClient.ChannelFactory.Credentials.Windows.ClientCredential = credentials;
 
-            //using (var logStream = downloadClient.DownloadProcessLogFile(processId, true))
-            //{
-            //    using (var fileStream = File.Create(@"C:\Packages\log.txt"))
-            //    {
-            //        logStream.CopyTo(fileStream);
-            //    }
-            //}
-
             using (var packageStream = downloadClient.DownloadPackage(processId, deleteFromServerAfterDownload: true))
             {
                 using (var fileStream = File.Create(packageLocation))
@@ -146,12 +152,13 @@ namespace LatestItems.Controllers
             }
         }
 
-        public class LatestItemsRequest { public string tcmOfFolder { get; set; }
+        public class LatestItemsRequest { public string tcmOfContainer { get; set; }
+                                          public string publication { get; set; }
                                           public string startTime { get; set; }
                                           public string endTime { get; set; } }
 
         [HttpPost]
-        [Route("LatestItems/{tcmOfFolder}")]
+        [Route("LatestItems")]
         public string GetLatestItems(LatestItemsRequest request)
         {
             // Create a new, null Core Service Client
@@ -172,31 +179,42 @@ namespace LatestItems.Controllers
                 string html = "<div class=\"usingItems results\" id=\"latestItemsList\">";
                 html += CreateItemsHeading();
 
-                SearchQueryData filter3 = new SearchQueryData();
+                var filter = new SearchQueryData();
 
                 // TODO: Add check for valid start and end times:
 
                 if (String.IsNullOrEmpty(request.startTime))
                 {
-                    filter3.ModifiedAfter = DateTime.Now.AddDays(-1);
+                    filter.ModifiedAfter = DateTime.Now.AddDays(-1);
                 }
                 else
                 {
-                    filter3.ModifiedAfter = Convert.ToDateTime(request.startTime);
+                    filter.ModifiedAfter = Convert.ToDateTime(request.startTime);
                 }
 
                 if (String.IsNullOrEmpty(request.endTime))
                 {
-                    filter3.ModifiedBefore = DateTime.Now;
+                    filter.ModifiedBefore = DateTime.Now;
                 }
                 else
                 {
-                    filter3.ModifiedBefore = Convert.ToDateTime(request.endTime);
+                    filter.ModifiedBefore = Convert.ToDateTime(request.endTime);
                 }
-                filter3.IncludeLocationInfoColumns = true;
-                filter3.SearchIn = new LinkToIdentifiableObjectData { IdRef = "tcm:0-1006-1"/*tcmOfFolder*/ };
+                filter.IncludeLocationInfoColumns = true;
 
-                foreach (IdentifiableObjectData item in client.GetSearchResults(filter3))
+                //TODO:Local doesn't seem to be working for 030C folders,
+                // also, you want local in addition to localized, I think...
+                //filter.BlueprintStatus = SearchBlueprintStatus.Local;
+
+                if(!string.IsNullOrEmpty(request.publication) && !request.publication.Equals("(All)"))
+                {
+                    // Assume publication field is valid publication name
+                    // TODO: Validate here
+                    string pubTcm = client.GetTcmUri("/webdav/" + request.publication, null, null);
+                    filter.SearchIn = new LinkToIdentifiableObjectData { IdRef = pubTcm };//"tcm:0-1006-1"/*tcmOfContainer*/ };
+                }
+
+                foreach (IdentifiableObjectData item in client.GetSearchResults(filter))
                 {
                     string path = "";
                     if (item is RepositoryLocalObjectData)
@@ -205,6 +223,7 @@ namespace LatestItems.Controllers
                     }
 
                     string currItemHtml = "<div class=\"item\">";
+                    // TODO: Look at Not_Used to see how icon is retrieved:
                     //currItemHtml += "<div class=\"icon\" style=\"background-image: url(/WebUI/Editors/CME/Themes/Carbon2/icon_v7.1.0.66.627_.png?name=" + item.Title + "&size=16)\"></div>";
                     currItemHtml += "<div class=\"name\">" + item.Title + "</div>";
                     currItemHtml += "<div class=\"path\">" + path + "</div>";
@@ -242,16 +261,16 @@ namespace LatestItems.Controllers
         /// Finds the list of items not being used within a given Tridion folder (given by tcm).
         /// object.
         /// </summary>
-        /// <param name="tcmOfFolder">
-        /// The TCM ID of a Tridion folder within which to find items that are latest items.
+        /// <param name="tcmOfContainer">
+        /// The TCM ID of a Tridion container within which to find items that are latest items.
         /// Tridion
         /// <returns>
         /// Formatted HTML containing a list of unused items contained by the input folder.
         /// Tridion object
         /// </returns>
         [HttpGet]
-        [Route("LatestItems/{tcmOfFolder}/{startTime}/{endTime}")]
-        public string GetLatestItemsOld(string tcmOfFolder, string startTime, string endTime = "")
+        [Route("LatestItems/{tcmOfContainer}/{startTime}/{endTime}")]
+        public string GetLatestItemsOld(string tcmOfContainer, string startTime, string endTime = "")
         {
             // Create a new, null Core Service Client
             SessionAwareCoreServiceClient client = null;
@@ -440,7 +459,8 @@ namespace LatestItems.Controllers
         public string GetUserName()
         {
             string text = string.Empty;
-            if (HttpContext.Current != null && HttpContext.Current.User != null && HttpContext.Current.User.Identity != null)
+
+            if ((HttpContext.Current != null) && (HttpContext.Current.User != null) && (HttpContext.Current.User.Identity != null))
             {
                 text = HttpContext.Current.User.Identity.Name;
             }
@@ -448,10 +468,12 @@ namespace LatestItems.Controllers
             {
                 text = ServiceSecurityContext.Current.WindowsIdentity.Name;
             }
+
             if (string.IsNullOrEmpty(text))
             {
                 text = Thread.CurrentPrincipal.Identity.Name;
             }
+
             return text;
         }
 

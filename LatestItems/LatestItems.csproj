@@ -91,6 +91,7 @@
     <Content Include="a4t.xml">
       <SubType>Designer</SubType>
     </Content>
+    <Content Include="Static\export_credentials.txt" />
     <Content Include="Static\Controls\LatestItemsGroup.ascx">
       <SubType>ASPXCodeBehind</SubType>
     </Content>
