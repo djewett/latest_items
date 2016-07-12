@@ -7,4 +7,6 @@ Depending on your Tridion installation, you may need to take the following steps
 
 http://tridion.kb.sdl.com/#tab:homeTab:crumb:7:artId:5353
 
+I noticed I had to redo those steps as well when my license expired and I needed to copy over the new Tridion licenses.
+
 (see also: http://docs.sdl.com/LiveContent/content/en-US/SDL%20Tridion%20Connector%20for%20Media%20Manager-v2/GUID-49001ADE-8661-43E5-B906-237D6EF44793)
