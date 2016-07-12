@@ -15,10 +15,4 @@ I noticed I had to redo those steps as well when my license expired and I needed
 
 ****IMPORTANT:
 
-To get this working, under the current implementation, you need to add a file called "export_credentials_and_config.txt" to the assets folder, with the following text (updated to your specific environment):
-
-user=Administrator
-password=XXXXXXXX
-http://localhost:81/webservices/ImportExportService2013.svc/basicHttp
-
-See attached example.
+To get this working, under the current implementation, you need to add a file called "export_credentials_and_config.txt" to the assets folder (by temporarily changing the .a4t file to a .zip). See attached example (but it needs to go in the assets folder).
