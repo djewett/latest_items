@@ -18,7 +18,5 @@ I noticed I had to redo those steps as well when my license expired and I needed
 To get this working, under the current implementation, you need to add a file called "export_credentials_and_config.txt" to the assets folder, with the following text (updated to your specific environment):
 
 user=Administrator
-
 password=XXXXXXXX
-
 http://localhost:81/webservices/ImportExportService2013.svc/basicHttp
