@@ -20,3 +20,5 @@ To get this working, under the current implementation, you need to add a file ca
 user=Administrator
 password=XXXXXXXX
 http://localhost:81/webservices/ImportExportService2013.svc/basicHttp
+
+See attached example.
