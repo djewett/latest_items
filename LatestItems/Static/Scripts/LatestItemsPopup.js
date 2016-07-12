@@ -137,6 +137,7 @@
                 // Note: tcmOfContainer can be for a publication, folder, structure group, etc.
                 Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItems({tcmOfContainer: tcmInput,
                                                                                         publication: $j("#publicationName").val(),
+                                                                                        user: $j("#userId").val(),
                                                                                         startTime: $j("#startDate_date").val() + " " + $j("#startDate_time").val(),
                                                                                         endTime: $j("#endDate_date").val() + " " + $j("#endDate_time").val()})
                 .success(function (items) {

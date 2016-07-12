@@ -91,11 +91,11 @@
     <Content Include="a4t.xml">
       <SubType>Designer</SubType>
     </Content>
-    <Content Include="Static\export_credentials.txt" />
     <Content Include="Static\Controls\LatestItemsGroup.ascx">
       <SubType>ASPXCodeBehind</SubType>
     </Content>
     <Content Include="Static\Images\favicon.png" />
+    <Content Include="Static\Images\latest-items.png" />
     <Content Include="Static\Images\latestitemsicon.16x16.png" />
     <Content Include="Static\Scripts\LatestItemsCommandContextMenu.js" />
     <Content Include="Static\Scripts\LatestItemsPopup.js" />

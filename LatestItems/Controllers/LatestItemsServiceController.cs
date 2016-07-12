@@ -51,24 +51,27 @@ namespace LatestItems.Controllers
 
             try
             {
+                // Remove "BIN/":
+                string assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                assemblyPath = assemblyPath.Substring(0, assemblyPath.Length - 4);
+                string path = Path.Combine(assemblyPath, @"assets\export_credentials_and_config.txt");
+                string[] files = File.ReadAllLines(path);
+
                 // These settings are taken from Tridion.ContentManager.ImportExport.Common.dll. Normally, these would be entered in a web.config file, 
                 // or similar, and pull in here simply by referencing the binding/endpoint in that config. But since there is no such file for this 
                 // Alchemy plugin, we opt set these up here.
-                var endpointAddress = new EndpointAddress(new Uri("http://localhost:81/webservices/ImportExportService2013.svc/basicHttp"));
+                var endpointAddress = new EndpointAddress(new Uri(files[2]));
                 var binding = new BasicHttpBinding();
                 binding.Name = "ImportExport_basicHttpBinding";
                 binding.Security.Mode = BasicHttpSecurityMode.TransportCredentialOnly;
                 binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.Windows;
+                //binding.MaxReceivedMessageSize = int.MaxValue;
+                //binding.
 
                 var importExportClient = new ImportExportServiceClient(binding, endpointAddress);
                 importExportClient.ClientCredentials.UseIdentityConfiguration = true;
                 importExportClient.ChannelFactory.Credentials.UseIdentityConfiguration = true;
 
-                // Remove "BIN/":
-                string assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                assemblyPath = assemblyPath.Substring(0, assemblyPath.Length - 4);
-                string path = Path.Combine(assemblyPath, @"assets\export_credentials.txt");
-                string[] files = File.ReadAllLines(path);
                 // Remove "user=" from files[0] and "password=" from files[1] to get the credentials.
                 string user = files[0].Substring(5);
                 string password = files[1].Substring(9);
@@ -85,7 +88,8 @@ namespace LatestItems.Controllers
                 {
                     LogLevel = LogLevel.Normal,
                     BluePrintMode = BluePrintMode.ExportSharedItemsFromOwningPublication,
-                    //ExpandDependenciesOfTypes = IncludeDependencyTypes
+                    ExpandDependenciesOfTypes = {},
+                    ErrorHandlingMode = ErrorHandlingMode.Skip
                 };
 
                 var selection = new Selection[] { new ItemsSelection(tcms) };
@@ -101,7 +105,7 @@ namespace LatestItems.Controllers
                     DownloadPackage(processId, request.outputFileWithPath, credentials); // @"C:\Packages\exported.zip", credentials);
                 }
 
-                output += "Export complete";
+                output += "Export complete - process state: " + processState.ToString();// + importExportClient.;
             }
             catch(Exception e)
             {
@@ -137,6 +141,7 @@ namespace LatestItems.Controllers
             binding.Security.Mode = BasicHttpSecurityMode.TransportCredentialOnly;
             binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.Windows;
             binding.MessageEncoding = WSMessageEncoding.Mtom;
+            binding.MaxReceivedMessageSize = int.MaxValue;
 
             var downloadClient = new ImportExportStreamDownloadClient(binding, endpointAddress);
             downloadClient.ClientCredentials.UseIdentityConfiguration = true; // TODO: this line needed?
@@ -154,6 +159,7 @@ namespace LatestItems.Controllers
 
         public class LatestItemsRequest { public string tcmOfContainer { get; set; }
                                           public string publication { get; set; }
+                                          public string user { get; set; }
                                           public string startTime { get; set; }
                                           public string endTime { get; set; } }
 
@@ -200,6 +206,7 @@ namespace LatestItems.Controllers
                 {
                     filter.ModifiedBefore = Convert.ToDateTime(request.endTime);
                 }
+
                 filter.IncludeLocationInfoColumns = true;
 
                 //TODO:Local doesn't seem to be working for 030C folders,
@@ -214,7 +221,55 @@ namespace LatestItems.Controllers
                     filter.SearchIn = new LinkToIdentifiableObjectData { IdRef = pubTcm };//"tcm:0-1006-1"/*tcmOfContainer*/ };
                 }
 
-                foreach (IdentifiableObjectData item in client.GetSearchResults(filter))
+                if (!string.IsNullOrEmpty(request.user) && !request.user.Equals("(All)"))
+                {
+                    // TODO: Validate here
+                    //var users = client.GetSystemWideList(new UsersFilterData { BaseColumns = ListBaseColumns.IdAndTitle, IsPredefined = false });
+                    //var userData = users.FirstOrDefault(item => item.Title == request.user);  //domain + "\\" + name);
+                    //filter.Author = userData;
+                }
+
+                //filter.SearchInSubtree = true;
+
+                filter.ItemTypes = new[]{ItemType.Schema,
+                                         ItemType.Component,
+                                         ItemType.TemplateBuildingBlock,
+                                         ItemType.ComponentTemplate,
+                                         ItemType.PageTemplate,
+                                         ItemType.Category,
+                                         ItemType.Folder,
+                                         ItemType.Keyword,
+                                         ItemType.Page,
+                                         ItemType.StructureGroup,
+                                         ItemType.VirtualFolder,
+                                         ItemType.Publication};
+
+                // TODO: Test localized instead of local; may need to process each one separately:
+                filter.BlueprintStatus = SearchBlueprintStatus.Local;
+
+                ////string extraTestHtml = "";// "<div>";
+
+                // Make a copy of filter, but set BlueprintStatus to Localized.
+                var filter2 = new SearchQueryData();
+                filter2.ModifiedBefore = filter.ModifiedBefore;
+                filter2.ModifiedAfter = filter.ModifiedAfter;
+                filter2.IncludeLocationInfoColumns = filter.IncludeLocationInfoColumns;
+                filter2.SearchIn = filter.SearchIn;
+                filter2.ItemTypes = filter.ItemTypes;
+                filter2.BlueprintStatus = SearchBlueprintStatus.Localized;
+
+                var searchResults = client.GetSearchResults(filter);
+                var searchResults2 = client.GetSearchResults(filter2);
+
+                // Merge the two searchResults arrays (union goes into searchResults):
+                int array1OriginalLength = searchResults.Length;
+                Array.Resize<IdentifiableObjectData>(ref searchResults, array1OriginalLength + searchResults2.Length);
+                Array.Copy(searchResults2, 0, searchResults, array1OriginalLength, searchResults2.Length);
+
+                string extraTestHtml = "";
+                
+                ////foreach (IdentifiableObjectData item in client.GetSearchResults(filter))
+                foreach (IdentifiableObjectData item in searchResults)
                 {
                     string path = "";
                     if (item is RepositoryLocalObjectData)
@@ -222,16 +277,64 @@ namespace LatestItems.Controllers
                         path = ((RepositoryLocalObjectData)item).LocationInfo.Path;
                     }
 
-                    string currItemHtml = "<div class=\"item\">";
-                    // TODO: Look at Not_Used to see how icon is retrieved:
-                    //currItemHtml += "<div class=\"icon\" style=\"background-image: url(/WebUI/Editors/CME/Themes/Carbon2/icon_v7.1.0.66.627_.png?name=" + item.Title + "&size=16)\"></div>";
-                    currItemHtml += "<div class=\"name\">" + item.Title + "</div>";
-                    currItemHtml += "<div class=\"path\">" + path + "</div>";
-                    currItemHtml += "<div class=\"id\">" + item.Id + "</div>";
-                    currItemHtml += "</div>";
+                    bool outputItem = true;
 
-                    html += currItemHtml;
+                    // If user is not empty or set to (All), then run some logic to see if items match selected user within specified time range.
+                    // If no specific user is specified, DO NOT run these checks as they are expensive and not necessary in that case!
+                    if (!string.IsNullOrEmpty(request.user) && !request.user.Equals("(All)"))
+                    {
+                        // Set flag to false by default and set back to true if we find a match.
+                        outputItem = false;
+
+                        VersionsFilterData versionsFilter = new VersionsFilterData();
+                        versionsFilter.IncludeRevisorDescriptionColumn = true;
+                        IdentifiableObjectData[] versionList = client.GetList(item.Id, versionsFilter);
+
+                        foreach (IdentifiableObjectData objectData in versionList)
+                        {
+                            var versionInfo = (FullVersionInfo)objectData.VersionInfo;
+
+                            // Check 2 things:
+                            // 1) that versionInfo.Revisor.Title == request.user
+                            // 2) that versionInfo.RevisionDate.Value is between filter.ModifiedAfter and filter2.ModifiedBefore
+                            // If we find a match, set outputItem to true and break the foreach loop.
+
+                            if(versionInfo.Revisor.Title == request.user)
+                            {
+                                if ((objectData.VersionInfo.RevisionDate >= filter.ModifiedAfter) && (objectData.VersionInfo.RevisionDate <= filter.ModifiedBefore))
+                                {
+                                    outputItem = true;
+                                    break;
+                                }
+                            }
+
+                            //extraTestHtml += objectData.Id + " -- " + objectData.VersionInfo.RevisionDate.Value.ToString() + " -- " + versionInfo.Revisor.Title + System.Environment.NewLine;
+                        }
+                    }
+
+                    if (outputItem)
+                    {
+                        string currItemHtml = "<div class=\"item\">";
+                        // TODO: Look at Not_Used to see how icon is retrieved:
+                        //currItemHtml += "<div class=\"icon\" style=\"background-image: url(/WebUI/Editors/CME/Themes/Carbon2/icon_v7.1.0.66.627_.png?name=" + item.Title + "&size=16)\"></div>";
+                        currItemHtml += "<div class=\"name\">" + item.Title + "</div>";
+                        currItemHtml += "<div class=\"path\">" + path + "</div>";
+                        currItemHtml += "<div class=\"id\">" + item.Id + "</div>";
+                        currItemHtml += "</div>";
+                        html += currItemHtml;
+                    }
                 }
+
+                // FOR TESTING / LOGGING ONLY!!! TODO: REMOVE:
+                //html += "<div class=\"item\">";
+                //html += "<div class=\"name\">" + extraTestHtml + "</div>";
+                //html += "<div class=\"path\">" + request.publication + " -- " + request.user + "</div>";
+                //html += "<div class=\"id\">" + filter.ModifiedAfter + " -- " + filter.ModifiedBefore + "</div>";
+                //html += "</div>";
+
+                ////System.IO.File.WriteAllText(@"C:\Users\Administrator\Desktop\WriteText.txt", extraTestHtml);
+                ////System.IO.File.WriteAllText(@"C:\Users\Administrator\Desktop\WriteText.txt", filter.ModifiedAfter + " // " + filter.ModifiedBefore);
+                ////extraTestHtml += "</div>";
 
                 // Close the div we opened above
                 html += "</div>";

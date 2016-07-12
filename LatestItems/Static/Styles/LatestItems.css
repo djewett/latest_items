@@ -2,3 +2,9 @@
     background-image: url('${ImgUrl}latestitemsicon.16x16.png');
     background-size: 16px;
 }
+
+#LatestItemsBtn .image {
+    background-image: url('${ImgUrl}latest-items.png');
+    background-position: -6px 0;
+    width: 33px;
+}
