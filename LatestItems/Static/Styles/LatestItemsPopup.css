@@ -168,6 +168,6 @@
 #startDate{
     padding-top: 0px;
 }
-#containerFields, #exportUserFields, #exportPasswordFields{
+#containerFields, #exportUserFields{
     display: none;
 }

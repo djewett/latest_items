@@ -86,6 +86,14 @@
             // Time will always be the exact same as now:
             $j("#startDate_time").val(nowTime);
 
+
+            $j("#exportPassword").val("XXX");
+
+            // TODO: test encryption here and put encrypted password in text box
+
+            //$j("#export_config_text").val($j("#exportPassword").val());
+
+
             //////function formatAMPM(date) {
             //////    var hours = date.getHours();
             //////    var minutes = date.getMinutes();

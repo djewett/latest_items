@@ -17,6 +17,7 @@ namespace LatestItems.Config
             // When adding files you only need to specify the filename and not full path
             AddFile("LatestItemsPopup.js");
             AddFile("LatestItemsPopup.css");
+
             // The above is just a convenient way of doing the following...
             // AddFile(FileTypes.Reference, "Alchemy.Plugins.HelloWorld.Commands.HelloCommandSet");
 
