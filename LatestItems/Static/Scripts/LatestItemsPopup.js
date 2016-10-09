@@ -167,6 +167,43 @@
 
             $j("#export_config").click(function () {
                 $j("#export_config_text").html("");
+
+
+
+
+                //string[] modulusAndExponent;
+
+                // Retrieve public key (modulus and exponent) from Alchemy.Plugins["${PluginName}"].Api
+                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getPublicKeyModulusAndExponent()
+                .success(function (publicKey) {
+                    publicKey[0];
+                    publicKey[1];
+                    $j("#export_config_text").html(publicKey[1]);
+                })
+                .error(function (type, error) {
+                    // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
+                    // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
+                console.log("There was an error", error.message);
+                })
+                .complete(function () {
+                    // this is called regardless of success or failure.
+                    deselectItems();
+                    setupForItemClicked();
+                });
+
+                // Encrypt the password field using 
+
+                // Pass the encrypted password  to Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig()
+                // (need to add a field for it to the input struct for that function)
+
+
+
+
+
+
+
+
+
                 // Convert an array of all tcms to a string:
                 var theTcmString = $j(".item .id").text().toString();
                 // Replace the "tcm:" substrings with commas, since we can't pass ":"
@@ -176,7 +213,7 @@
                 Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig({input: theTcmString,
                                                                         outputFileWithPath: $j("#exportPackage").val()})
                 .success(function (items) {
-                    $j("#export_config_text").html(items);
+                    //$j("#export_config_text").html(items);
                 })
                 .error(function (type, error) {
                     // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing

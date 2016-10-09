@@ -28,6 +28,8 @@ namespace LatestItems.Controllers
     [AlchemyRoutePrefix("LatestItemsService")]
     public class LatestItemsServiceController : AlchemyApiController
     {
+        RSACryptoServiceProvider csp;
+
         // Dummy method needed, as I could not figure out how to get JS running properly without it.
         // TODO: Find a way to remove this dummy method.
         [HttpGet]
@@ -39,6 +41,35 @@ namespace LatestItems.Controllers
 
         public class ExportConfigRequest { public string input { get; set; }
                                            public string outputFileWithPath { get; set; } }
+
+        [HttpPost]
+        [Route("PublicKeyModulusAndExponent")]
+        public string[] GetPublicKeyModulusAndExponent(ExportConfigRequest request)
+        {
+            csp = new RSACryptoServiceProvider();
+
+            var pubKey = csp.ExportParameters(false);
+
+            // Convert byte[] to hex string.
+            string modulusAsHexString = ConvertByteArrayToHexString(pubKey.Modulus);
+            string exponentAsHexString = ConvertByteArrayToHexString(pubKey.Exponent);
+
+            string[] publicKey = { modulusAsHexString, exponentAsHexString };
+
+            return publicKey;
+        }
+
+        private string ConvertByteArrayToHexString(byte[] byteArray)
+        {
+            StringBuilder hex = new StringBuilder(byteArray.Length * 2);
+
+            foreach (byte b in byteArray)
+            {
+                hex.AppendFormat("{0:x2}", b);
+            }
+
+            return hex.ToString();
+        }
 
         [HttpPost]
         [Route("ExportConfig")]
