@@ -13,6 +13,7 @@ using Tridion.ContentManager.ImportExport;
 using Tridion.ContentManager.ImportExport.Client;
 using System.Security.Cryptography;
 using System.Text;
+using System.Diagnostics;
 
 namespace LatestItems.Controllers
 {
@@ -28,7 +29,9 @@ namespace LatestItems.Controllers
     [AlchemyRoutePrefix("LatestItemsService")]
     public class LatestItemsServiceController : AlchemyApiController
     {
-        RSACryptoServiceProvider csp;
+        // Made static to persist across multiple POST and GET calls.
+        // TODO: Look into a better way to do this.
+        static RSACryptoServiceProvider csp;
 
         // Dummy method needed, as I could not figure out how to get JS running properly without it.
         // TODO: Find a way to remove this dummy method.
@@ -39,14 +42,11 @@ namespace LatestItems.Controllers
             return "";
         }
 
-        public class ExportConfigRequest { public string input { get; set; }
-                                           public string outputFileWithPath { get; set; } }
-
-        [HttpPost]
+        [HttpGet]
         [Route("PublicKeyModulusAndExponent")]
-        public string[] GetPublicKeyModulusAndExponent(ExportConfigRequest request)
+        public string[] GetPublicKeyModulusAndExponent()
         {
-            csp = new RSACryptoServiceProvider();
+            csp = new RSACryptoServiceProvider(1024);
 
             var pubKey = csp.ExportParameters(false);
 
@@ -69,6 +69,13 @@ namespace LatestItems.Controllers
             }
 
             return hex.ToString();
+        }
+
+        public class ExportConfigRequest
+        {
+            public string input { get; set; }
+            public string outputFileWithPath { get; set; }
+            public string encryptedPasswordAsHexString { get; set; }
         }
 
         [HttpPost]
@@ -136,237 +143,61 @@ namespace LatestItems.Controllers
                 }
 
 
-
-                //var cspParams = new CspParameters();
-                //cspParams.
-                //RSAParameters rsap = new RSAParameters();
-                //BigInteger e = new BigInteger("3", 10);
-                //byte[] exponentBytes = BitConverter.GetBytes(3);//Convert.FromBase64String("3");
-                //rsap.Exponent = e.getBytes();
-                //rsap.Exponent = exponentBytes;
-                
-
-                ////lets take a new CSP with a new 2048 bit rsa key pair
-                //var csp = new RSACryptoServiceProvider(1024);
-                ////csp.ImportParameters(rsap);
-
-
-                ////how to get the private key
-                //var privKey = csp.ExportParameters(true);
-
-                ////and the public key ...
-                //var pubKey = csp.ExportParameters(false);
-
-                ////converting the public key into a string representation
-                //string privKeyString;
-                //{
-                //    //we need some buffer
-                //    var sw = new System.IO.StringWriter();
-                //    //we need a serializer
-                //    var xs = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
-                //    //serialize the key into the stream
-                //    xs.Serialize(sw, privKey);
-                //    //get the string from the stream
-                //    privKeyString = sw.ToString();
-                //}
-
-                ////converting the public key into a string representation
-                //string pubKeyString;
-                //{
-                //    //we need some buffer
-                //    var sw = new System.IO.StringWriter();
-                //    //we need a serializer
-                //    var xs = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
-                //    //serialize the key into the stream
-                //    xs.Serialize(sw, pubKey);
-                //    //get the string from the stream
-                //    pubKeyString = sw.ToString();
-                //}
-
-
-
-
-                ////we need some data to encrypt
-                //var plainTextData = "foobar";
-
-                ////for encryption, always handle bytes...
-                //var bytesPlainTextData = System.Text.Encoding.Unicode.GetBytes(plainTextData);
-
-                ////apply pkcs#1.5 padding and encrypt our data 
-                //var bytesCypherText = csp.Encrypt(bytesPlainTextData, false);
-
-                ////we might want a string representation of our cypher text... base64 will do
-                //var cypherText = Convert.ToBase64String(bytesCypherText);
-
-
-                /*
-                 * some transmission / storage / retrieval
-                 * 
-                 * and we want to decrypt our cypherText
-                 */
-
-                ////first, get our bytes back from the base64 string ...
-                //bytesCypherText = Convert.FromBase64String(cypherText);
-
-                ////we want to decrypt, therefore we need a csp and load our private key
-                //csp = new RSACryptoServiceProvider();
-                //csp.ImportParameters(privKey);
-
-                ////decrypt and strip pkcs#1.5 padding
-                //bytesPlainTextData = csp.Decrypt(bytesCypherText, false);
-
-                ////get our original plainText back...
-                //var plainTextData2 = System.Text.Encoding.Unicode.GetString(bytesPlainTextData);
-
-
-                    //StringBuilder hex = new StringBuilder(pubKey.Exponent.Length * 2);
-                    //foreach (byte b in pubKey.Exponent)
-                    //{
-                    //    hex.AppendFormat("{0:x2}", b);
-                    //}
-                    //string pubKeyExpAsHexString = hex.ToString();
-
-                    //StringBuilder hex2 = new StringBuilder(pubKey.Modulus.Length * 2);
-                    //foreach (byte b in pubKey.Modulus)
-                    //{
-                    //    hex2.AppendFormat("{0:x2}", b);
-                    //}
-                    //string pubKeyModAsHexString = hex2.ToString();
-
-                    //StringBuilder hex3 = new StringBuilder(bytesCypherText.Length * 2);
-                    //foreach (byte b in bytesCypherText)
-                    //{
-                    //    hex3.AppendFormat("{0:x2}", b);
-                    //}
-                    //string bytesCypherTextHexString = hex3.ToString();
-
-
-
-                    // Use these public and private keys and make sure following string gets decrypted to "foober":
-                    //
-                    // <?xml version="1.0" encoding="utf-16"?>
-                    // <RSAParameters xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                    //   <Exponent>AQAB</Exponent>
-                    //   <Modulus>prSy4/Oe8iRgyWR649O7O2fSNYFUyZ8D+fUrHjXVbqAbOTitmiC15ZDdAueF6sW0hIjdcPVrmp5ZMnwmVU7whfHkAkNlDlT7PoLAU3/kGvtd0eLM125OxBqd1CHsEkjZjmPpWhoVcIn+G5hAIhBbalqUwNB+osK2lkkAvVpAkk8=</Modulus>
-                    // </RSAParameters>
-                    //
-                    // <?xml version="1.0" encoding="utf-16"?>
-                    // <RSAParameters xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                    //   <Exponent>AQAB</Exponent>
-                    //   <Modulus>prSy4/Oe8iRgyWR649O7O2fSNYFUyZ8D+fUrHjXVbqAbOTitmiC15ZDdAueF6sW0hIjdcPVrmp5ZMnwmVU7whfHkAkNlDlT7PoLAU3/kGvtd0eLM125OxBqd1CHsEkjZjmPpWhoVcIn+G5hAIhBbalqUwNB+osK2lkkAvVpAkk8=</Modulus>
-                    //   <P>1uhvnIRWhHeOaw7/TeSeyLZneXeyY9AVwvOeUDGOpzXDWH4yghode9h4f0AVUrPpAgOChNVgv20TkFtrTwH6Rw==</P>
-                    //   <Q>xpTPfsXk5/T4KxIlKLG5Bhtun1XDQOtXzt6NzyHBFIQEIzoYohxu5XMaMs8xwZFau+YVfkZflxMr7h4wAQ0juQ==</Q>
-                    //   <DP>e06kc5bPGXSLx8u0GxpZLOrT1jMirPiA8/naVUMKCdDkQ8ss6c9YKW4cPU8krO5DfH9NDTBtMYjBV+vMV2nYEw==</DP>
-                    //   <DQ>U2S25qQwhwCnH19VX4uTCe+HOz6G6sJqc6Oepfek3/q4yhphseKC57S4sdG1MXbbRcFQEWF4Tzdr4Wmn+ykLcQ==</DQ>
-                    //   <InverseQ>LodX0DbWYS3fPDLhpWMf/qH3yMVkEoIkLItFXo4Up2eq02K5E9UbbCRLuW7RgPeHogpaRZOIAluHDMw32DsWrg==</InverseQ>
-                    //   <D>gI2T7ejuRzf6UxNjGNEr7xGOrqf/JEO1o0mGaJOG9PoOREAKz3IuEst1Q0oaoQK4xANvEC6RPfiiPCY0wVBQdRtI63G/zah8diTIVFNOXhW6FP6eK2BweCihM/xcpJqDSLXBLxI3QaaIlr08K4J96mSiMKLBgG2GMcOYFY3auSE=</D>
-                    // </RSAParameters>
-                    //
-                    // string tryDecryptingThisHex = "7883b11ab14c4b219a01fe193420d4595e4cf71eff8898d1f4aab0ca37ba84fe20b4288b8c7515885865a25050377b36026a55c045325cbaa949a5ff55441490a3f11088f1880d7ceef1c32b748124c19d1288447650abb548e6b1dd175c9aee09806b8c59769d52a5a5b1a9c1aff3448a795bae3c59223136bdd7322e1b2523";
+                output += "here1" + System.Environment.NewLine;
 
                 // hex:
-                string tryDecryptingThisHex = "7883b11ab14c4b219a01fe193420d4595e4cf71eff8898d1f4aab0ca37ba84fe20b4288b8c7515885865a25050377b36026a55c045325cbaa949a5ff55441490a3f11088f1880d7ceef1c32b748124c19d1288447650abb548e6b1dd175c9aee09806b8c59769d52a5a5b1a9c1aff3448a795bae3c59223136bdd7322e1b2523";
+                string tryDecryptingThisHex = request.encryptedPasswordAsHexString;
+                    //"7883b11ab14c4b219a01fe193420d4595e4cf71eff8898d1f4aab0ca37ba84fe20b4288b8c7515885865a25050377b36026a55c045325cbaa949a5ff55441490a3f11088f1880d7ceef1c32b748124c19d1288447650abb548e6b1dd175c9aee09806b8c59769d52a5a5b1a9c1aff3448a795bae3c59223136bdd7322e1b2523";
                 // "foobar" is the expected output when decrypting this input hex
 
+
+                output += "here2" + System.Environment.NewLine;
+
                 int NumberChars = tryDecryptingThisHex.Length;
+
+                output += "here3" + System.Environment.NewLine + tryDecryptingThisHex + System.Environment.NewLine;
+
                 byte[] tryDecryptingThisBytes = new byte[NumberChars / 2];
                 for (int i = 0; i < NumberChars; i += 2)
                     tryDecryptingThisBytes[i / 2] = Convert.ToByte(tryDecryptingThisHex.Substring(i, 2), 16);
 
+                output += "here4" + System.Environment.NewLine + tryDecryptingThisBytes.ToString() + System.Environment.NewLine;
 
-
-                //string representation of byte[] to byte[]
-                    //bytesCypherText = Convert.FromBase64String(cypherText);
-
-                //RSAParameters privKeyTest = new RSAParameters();
-                //privKeyTest.
-
-                string privKeyAsXmlString = "<?xml version=\"1.0\"?><RSAParameters xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><Exponent>AQAB</Exponent><Modulus>prSy4/Oe8iRgyWR649O7O2fSNYFUyZ8D+fUrHjXVbqAbOTitmiC15ZDdAueF6sW0hIjdcPVrmp5ZMnwmVU7whfHkAkNlDlT7PoLAU3/kGvtd0eLM125OxBqd1CHsEkjZjmPpWhoVcIn+G5hAIhBbalqUwNB+osK2lkkAvVpAkk8=</Modulus><P>1uhvnIRWhHeOaw7/TeSeyLZneXeyY9AVwvOeUDGOpzXDWH4yghode9h4f0AVUrPpAgOChNVgv20TkFtrTwH6Rw==</P><Q>xpTPfsXk5/T4KxIlKLG5Bhtun1XDQOtXzt6NzyHBFIQEIzoYohxu5XMaMs8xwZFau+YVfkZflxMr7h4wAQ0juQ==</Q><DP>e06kc5bPGXSLx8u0GxpZLOrT1jMirPiA8/naVUMKCdDkQ8ss6c9YKW4cPU8krO5DfH9NDTBtMYjBV+vMV2nYEw==</DP><DQ>U2S25qQwhwCnH19VX4uTCe+HOz6G6sJqc6Oepfek3/q4yhphseKC57S4sdG1MXbbRcFQEWF4Tzdr4Wmn+ykLcQ==</DQ><InverseQ>LodX0DbWYS3fPDLhpWMf/qH3yMVkEoIkLItFXo4Up2eq02K5E9UbbCRLuW7RgPeHogpaRZOIAluHDMw32DsWrg==</InverseQ><D>gI2T7ejuRzf6UxNjGNEr7xGOrqf/JEO1o0mGaJOG9PoOREAKz3IuEst1Q0oaoQK4xANvEC6RPfiiPCY0wVBQdRtI63G/zah8diTIVFNOXhW6FP6eK2BweCihM/xcpJqDSLXBLxI3QaaIlr08K4J96mSiMKLBgG2GMcOYFY3auSE=</D></RSAParameters>";
-
-                var xs2 = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
-                MemoryStream stream = new MemoryStream();
-                StreamWriter writer = new StreamWriter(stream);
-                writer.Write(privKeyAsXmlString);
-                writer.Flush();
-                stream.Position = 0;
-                RSAParameters privKeyTest = (RSAParameters)xs2.Deserialize(stream);
-
-
-                //// For testing:
-                //string privKeyStringTest;
-                //{
-                //    //we need some buffer
-                //    var sw = new System.IO.StringWriter();
-                //    //we need a serializer
-                //    var xs3 = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
-                //    //serialize the key into the stream
-                //    xs3.Serialize(sw, privKeyTest);
-                //    //get the string from the stream
-                //    privKeyStringTest = sw.ToString();
-                //}
-
-
-                //var cspTest = new RSACryptoServiceProvider();
-                //cspTest.ImportParameters(privKeyTest);
-
-                ////we need some data to encrypt
-                //var plainTextData4 = "foobar";
-
-                ////for encryption, always handle bytes...
-                //var bytesPlainTextData4 = System.Text.Encoding.Unicode.GetBytes(plainTextData4);
-
-                ////apply pkcs#1.5 padding and encrypt our data 
-                //var bytesCypherText4 = csp.Encrypt(bytesPlainTextData4, false);
-
-                ////we might want a string representation of our cypher text... base64 will do
-                //var cypherText4 = Convert.ToBase64String(bytesCypherText4);
-
-                //output += cypherText4;
-
-                
-                try
+                foreach(byte byt in tryDecryptingThisBytes)
                 {
+                    output += "here4b: byt: " + byt + System.Environment.NewLine;
+                }
+
 
                     //we want to decrypt, therefore we need a csp and load our private key
-                    var cspTest = new RSACryptoServiceProvider();
-                    cspTest.ImportParameters(privKeyTest);
+                    ////var cspTest = new RSACryptoServiceProvider();
+                    /////cspTest.ImportParameters(privKeyTest);
 
                     //decrypt and strip pkcs#1.5 padding
-                    var bytesPlainTextDataTest = cspTest.Decrypt(tryDecryptingThisBytes, false);
+                    var bytesPlainTextDataTest = csp.Decrypt(tryDecryptingThisBytes, false);
+
+                    output += "here5" + System.Environment.NewLine;
 
                     //get our original plainText back...
                     // Note: bytes are apparently representing a UTF8 version of the decrypted text.
                     var plainTextData = System.Text.Encoding.UTF8.GetString(bytesPlainTextDataTest);
 
+                    output += "here6" + System.Environment.NewLine;
+
                     output += "*** " + plainTextData + " ***";// +System.Environment.NewLine + System.Environment.NewLine + privKeyStringTest;
+                    //output += "*** " + tryDecryptingThisHex + " ** " + tryDecryptingThisBytes.ToString() + " ***";
 
-                }
-                catch (System.Security.Cryptography.CryptographicException e)
-                {
-                    output += tryDecryptingThisBytes + System.Environment.NewLine + System.Environment.NewLine +
-                        e.ToString() + System.Environment.NewLine + System.Environment.NewLine +
-                        e.StackTrace;
-                }
-                
-                //foreach (byte b in tryDecryptingThisBytes)
-                //    output += b + System.Environment.NewLine;
-
-                //output += "Export complete - process state: " + processState.ToString();// + importExportClient.;
-
-                //output += plainTextData + System.Environment.NewLine +
-                //          cypherText + System.Environment.NewLine + System.Environment.NewLine +
-                //          bytesCypherTextHexString + System.Environment.NewLine + System.Environment.NewLine +
-                //          plainTextData2 + System.Environment.NewLine +
-                //            System.Environment.NewLine + System.Environment.NewLine + 
-                //            pubKeyString + System.Environment.NewLine + System.Environment.NewLine +
-                //            pubKeyExpAsHexString + System.Environment.NewLine + System.Environment.NewLine +
-                //            pubKeyModAsHexString + System.Environment.NewLine + System.Environment.NewLine +
-                //            privKeyString;
-                  //  output += "*** " + plainTextData + " ***" + System.Environment.NewLine + System.Environment.NewLine + privKeyStringTest;
             }
             catch(Exception e)
             {
-                output += e.ToString() + System.Environment.NewLine + System.Environment.NewLine + e.StackTrace;
+                // Get stack trace for the exception with source file information
+                var st = new StackTrace(e, true);
+                // Get the top stack frame
+                var frame = st.GetFrame(0);
+                // Get the line number from the stack frame
+                var line = frame.GetFileLineNumber();
+
+                output += e.ToString() + System.Environment.NewLine + System.Environment.NewLine + e.StackTrace + "line: " + line;
             }
 
             return output;

@@ -87,7 +87,7 @@
             $j("#startDate_time").val(nowTime);
 
 
-            $j("#exportPassword").val("XXX");
+            ////$j("#exportPassword").val("XXX");
 
             // TODO: test encryption here and put encrypted password in text box
 
@@ -166,19 +166,55 @@
             });
 
             $j("#export_config").click(function () {
-                $j("#export_config_text").html("");
+                //$j("#export_config_text").html("");
 
 
 
 
-                //string[] modulusAndExponent;
+
+                var modul = "";
+                var expon = "";
+                
+                var encryptedPWAsHexString = "";
+
 
                 // Retrieve public key (modulus and exponent) from Alchemy.Plugins["${PluginName}"].Api
                 Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getPublicKeyModulusAndExponent()
                 .success(function (publicKey) {
-                    publicKey[0];
-                    publicKey[1];
-                    $j("#export_config_text").html(publicKey[1]);
+                    modul = publicKey[0];
+                    expon = publicKey[1];
+                    //rsa.setPublic(publicKey[0], publicKey[1]);
+                    //$j("#export_config_text").val(publicKey[0] + " ////// " + publicKey[1]);
+                    // Encrypt the password field using cryptico/rsa.js
+                    var rsa = new RSAKey();
+                    //rsa.setPublic("ea67ed2943d029e89cdebfc318e852c07cc7b0cdcc969f37a354a942dc46c6bee2ac41c3d687ac22a82ea7f91793e997a92c9f0b4b1bd00d613e5dc68561b74b159d776e40da328316ec23c80253d949840df36601086facd6dcde61c4f8befb84eeed52dc875767368aae258ea28136f74843b911ab239c2f2073a94b7d1949", "010001");
+                    rsa.setPublic(modul, expon);
+                    encryptedPWAsHexString = rsa.encrypt($j("#exportPassword").val());
+
+                    // Convert an array of all tcms to a string:
+                    var theTcmString = $j(".item .id").text().toString();
+                    // Replace the "tcm:" substrings with commas, since we can't pass ":"
+                    theTcmString = theTcmString.replace(/tcm:/g, ",tcm:");
+                    // Remove the comma at the very beginning:
+                    theTcmString = theTcmString.substr(1);
+                    Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig({
+                        input: theTcmString,
+                        outputFileWithPath: $j("#exportPackage").val(),
+                        encryptedPasswordAsHexString: encryptedPWAsHexString
+                    })
+                    .success(function (items) {
+                        $j("#export_config_text").html(encryptedPWAsHexString + " //// " + modul + " //// " + expon + " //// " + items);
+                    })
+                    .error(function (type, error) {
+                        // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
+                        // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
+                        console.log("There was an error", error.message);
+                    })
+                    .complete(function () {
+                        // this is called regardless of success or failure.
+                        deselectItems();
+                        setupForItemClicked();
+                    });
                 })
                 .error(function (type, error) {
                     // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
@@ -191,7 +227,12 @@
                     setupForItemClicked();
                 });
 
-                // Encrypt the password field using 
+                // TODO: Check that public key was set up properly on rsa variable. Or move encryptedPasswordAsHexString setting inside above success function
+
+                
+
+
+                //$j("#export_config_text").val($j("#exportPassword").val());
 
                 // Pass the encrypted password  to Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig()
                 // (need to add a field for it to the input struct for that function)
@@ -204,27 +245,28 @@
 
 
 
-                // Convert an array of all tcms to a string:
-                var theTcmString = $j(".item .id").text().toString();
-                // Replace the "tcm:" substrings with commas, since we can't pass ":"
-                theTcmString = theTcmString.replace(/tcm:/g, ",tcm:");
-                // Remove the comma at the very beginning:
-                theTcmString = theTcmString.substr(1);
-                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig({input: theTcmString,
-                                                                        outputFileWithPath: $j("#exportPackage").val()})
-                .success(function (items) {
-                    //$j("#export_config_text").html(items);
-                })
-                .error(function (type, error) {
-                    // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
-                    // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
-                    console.log("There was an error", error.message);
-                })
-                .complete(function () {
-                    // this is called regardless of success or failure.
-                    deselectItems();
-                    setupForItemClicked();
-                });
+                //// Convert an array of all tcms to a string:
+                //var theTcmString = $j(".item .id").text().toString();
+                //// Replace the "tcm:" substrings with commas, since we can't pass ":"
+                //theTcmString = theTcmString.replace(/tcm:/g, ",tcm:");
+                //// Remove the comma at the very beginning:
+                //theTcmString = theTcmString.substr(1);
+                //Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig( {input: theTcmString,
+                //                                                                          outputFileWithPath: $j("#exportPackage").val(),
+                //                                                                          encryptedPasswordAsHexString: encryptedPWAsHexString} )
+                //.success(function (items) {
+                //    $j("#export_config_text").html(encryptedPWAsHexString + " //// " + modul + " //// " + expon + " //// " + items);
+                //})
+                //.error(function (type, error) {
+                //    // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
+                //    // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
+                //    console.log("There was an error", error.message);
+                //})
+                //.complete(function () {
+                //    // this is called regardless of success or failure.
+                //    deselectItems();
+                //    setupForItemClicked();
+                //});
             });
 
             setupForItemClicked();
