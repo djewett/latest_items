@@ -86,25 +86,6 @@
             // Time will always be the exact same as now:
             $j("#startDate_time").val(nowTime);
 
-
-            ////$j("#exportPassword").val("XXX");
-
-            // TODO: test encryption here and put encrypted password in text box
-
-            //$j("#export_config_text").val($j("#exportPassword").val());
-
-
-            //////function formatAMPM(date) {
-            //////    var hours = date.getHours();
-            //////    var minutes = date.getMinutes();
-            //////    var ampm = hours >= 12 ? 'pm' : 'am';
-            //////    hours = hours % 12;
-            //////    hours = hours ? hours : 12; // the hour '0' should be '12'
-            //////    minutes = minutes < 10 ? '0' + minutes : minutes;
-            //////    var strTime = hours + ':' + minutes + ' ' + ampm;
-            //////    return strTime;
-            //////}
-
             // First arg in success is what's returned by your controller's action
 
             // Upon successful retrieval of latest items, we want to remove the progress bar and add the latest items to the markup
@@ -166,31 +147,16 @@
             });
 
             $j("#export_config").click(function () {
-                //$j("#export_config_text").html("");
 
-
-
-
-
-                var modul = "";
-                var expon = "";
-                
-                var encryptedPWAsHexString = "";
-
+                $j("#export_config_text").html("");
 
                 // Retrieve public key (modulus and exponent) from Alchemy.Plugins["${PluginName}"].Api
                 Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getPublicKeyModulusAndExponent()
                 .success(function (publicKey) {
-                    modul = publicKey[0];
-                    expon = publicKey[1];
-                    //rsa.setPublic(publicKey[0], publicKey[1]);
-                    //$j("#export_config_text").val(publicKey[0] + " ////// " + publicKey[1]);
-                    // Encrypt the password field using cryptico/rsa.js
                     var rsa = new RSAKey();
-                    //rsa.setPublic("ea67ed2943d029e89cdebfc318e852c07cc7b0cdcc969f37a354a942dc46c6bee2ac41c3d687ac22a82ea7f91793e997a92c9f0b4b1bd00d613e5dc68561b74b159d776e40da328316ec23c80253d949840df36601086facd6dcde61c4f8befb84eeed52dc875767368aae258ea28136f74843b911ab239c2f2073a94b7d1949", "010001");
-                    rsa.setPublic(modul, expon);
-                    encryptedPWAsHexString = rsa.encrypt($j("#exportPassword").val());
-
+                    // modulus is stored in first element returned array and exponent in the second element.
+                    rsa.setPublic(publicKey[0], publicKey[1]);
+                    var encryptedPWAsHexString = rsa.encrypt($j("#exportPassword").val());
                     // Convert an array of all tcms to a string:
                     var theTcmString = $j(".item .id").text().toString();
                     // Replace the "tcm:" substrings with commas, since we can't pass ":"
@@ -200,10 +166,12 @@
                     Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig({
                         input: theTcmString,
                         outputFileWithPath: $j("#exportPackage").val(),
-                        encryptedPasswordAsHexString: encryptedPWAsHexString
+                        encryptedPasswordAsHexString: encryptedPWAsHexString,
+                        importExportEndpointAddress: $j("#exportEndPointAddress").val(),
+                        streamDownloadAddress: $j("#streamDownloadAddress").val()
                     })
                     .success(function (items) {
-                        $j("#export_config_text").html(encryptedPWAsHexString + " //// " + modul + " //// " + expon + " //// " + items);
+                        $j("#export_config_text").html(items);
                     })
                     .error(function (type, error) {
                         // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
@@ -226,47 +194,6 @@
                     deselectItems();
                     setupForItemClicked();
                 });
-
-                // TODO: Check that public key was set up properly on rsa variable. Or move encryptedPasswordAsHexString setting inside above success function
-
-                
-
-
-                //$j("#export_config_text").val($j("#exportPassword").val());
-
-                // Pass the encrypted password  to Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig()
-                // (need to add a field for it to the input struct for that function)
-
-
-
-
-
-
-
-
-
-                //// Convert an array of all tcms to a string:
-                //var theTcmString = $j(".item .id").text().toString();
-                //// Replace the "tcm:" substrings with commas, since we can't pass ":"
-                //theTcmString = theTcmString.replace(/tcm:/g, ",tcm:");
-                //// Remove the comma at the very beginning:
-                //theTcmString = theTcmString.substr(1);
-                //Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig( {input: theTcmString,
-                //                                                                          outputFileWithPath: $j("#exportPackage").val(),
-                //                                                                          encryptedPasswordAsHexString: encryptedPWAsHexString} )
-                //.success(function (items) {
-                //    $j("#export_config_text").html(encryptedPWAsHexString + " //// " + modul + " //// " + expon + " //// " + items);
-                //})
-                //.error(function (type, error) {
-                //    // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
-                //    // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
-                //    console.log("There was an error", error.message);
-                //})
-                //.complete(function () {
-                //    // this is called regardless of success or failure.
-                //    deselectItems();
-                //    setupForItemClicked();
-                //});
             });
 
             setupForItemClicked();

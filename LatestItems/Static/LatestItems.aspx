@@ -241,13 +241,23 @@
 	        </div>
             <div id="exportControls">
                 <div class="button" id="export_config"><span class="text">Export Items</span></div>
-                <div class="filterControl stack vertical">
-                    <label>Output package:</label>
-	                <input id="exportPackage" class="stack-calc" type="text" style="width: 178px;" value="C:\Packages\exported.zip" />
-                </div>
                 <div id="exportUserFields" class="filterControl stack vertical">
                     <label>Export User:</label>
 	                <input id="exportUser" class="stack-calc" type="text" style="width: 201px;" value="" />
+                </div>
+                <div id="exportEndPointAddressFields" class="filterControl stack vertical">
+                    <label>Import/Export service endpoint address:</label>
+                    <br />
+	                <input id="exportEndPointAddress" class="stack-calc" value="http://localhost:81/webservices/ImportExportService2013.svc/basicHttp" />
+                </div>
+                <div id="streamDownloadAddressFields" class="filterControl stack vertical">
+                    <label>Stream download endpoint address:</label>
+                    <br />
+	                <input id="streamDownloadAddress" class="stack-calc" value="http://localhost:81/webservices/ImportExportService2013.svc/streamDownload_basicHttp" />
+                </div>
+                <div class="filterControl stack vertical">
+                    <label>Output package:</label>
+	                <input id="exportPackage" class="stack-calc" type="text" style="width: 178px;" value="C:/Packages/exported.zip" />
                 </div>
                 <div id="exportPasswordFields" class="filterControl stack vertical">
                     <label>Export Password:</label>

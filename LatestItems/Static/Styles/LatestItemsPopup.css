@@ -140,9 +140,12 @@
     margin-right: 11px;
 }
 #export_config_text{
-    float:left;
-    clear:both;
-    margin-left: 46px;
+    float: left;
+    clear: both;
+    margin-left: 49px;
+    margin-top: 24px;
+    width: 276px;
+    height: 200px;
 }
 .filterControl{
     margin-left: 46px;
@@ -170,4 +173,9 @@
 }
 #containerFields, #exportUserFields{
     display: none;
+}
+#exportEndPointAddress, #streamDownloadAddress{
+    margin-top: 4px;
+    width: 278px;
+    margin-left: 0px;
 }

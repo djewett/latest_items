@@ -62,13 +62,22 @@ namespace LatestItems.Controllers
         private string ConvertByteArrayToHexString(byte[] byteArray)
         {
             StringBuilder hex = new StringBuilder(byteArray.Length * 2);
-
             foreach (byte b in byteArray)
             {
                 hex.AppendFormat("{0:x2}", b);
             }
-
             return hex.ToString();
+        }
+
+        private byte[] ConvertHexStringToByteArray(string hexString)
+        {
+            int NumberChars = hexString.Length;
+            byte[] byteArray = new byte[NumberChars / 2];
+            for (int i = 0; i < NumberChars; i += 2)
+            {
+                byteArray[i / 2] = Convert.ToByte(hexString.Substring(i, 2), 16);
+            }
+            return byteArray;
         }
 
         public class ExportConfigRequest
@@ -76,6 +85,8 @@ namespace LatestItems.Controllers
             public string input { get; set; }
             public string outputFileWithPath { get; set; }
             public string encryptedPasswordAsHexString { get; set; }
+            public string importExportEndpointAddress { get; set; }
+            public string streamDownloadAddress { get; set; }
         }
 
         [HttpPost]
@@ -88,36 +99,30 @@ namespace LatestItems.Controllers
 
             try
             {
-                // Remove "BIN/":
-                string assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                assemblyPath = assemblyPath.Substring(0, assemblyPath.Length - 4);
-                string path = Path.Combine(assemblyPath, @"assets\export_credentials_and_config.txt");
-                string[] files = File.ReadAllLines(path);
+                // Retrieve credentials.
+                string username = GetUserName();
+                // Password comes in as a hex string from the request.
+                string encryptedPWAsHexString = request.encryptedPasswordAsHexString;
+                byte[] encryptedPWAsByteArray = ConvertHexStringToByteArray(encryptedPWAsHexString);
+                // Decrypt and strip pkcs#1.5 padding.
+                var bytesPlainTextDataTest = csp.Decrypt(encryptedPWAsByteArray, false);
+                // Get our original plainText back.
+                // Note: bytes are apparently representing a UTF8 version of the decrypted text.
+                var password = System.Text.Encoding.UTF8.GetString(bytesPlainTextDataTest);
+                var credentials = new NetworkCredential(username, password);
 
                 // These settings are taken from Tridion.ContentManager.ImportExport.Common.dll. Normally, these would be entered in a web.config file, 
                 // or similar, and pull in here simply by referencing the binding/endpoint in that config. But since there is no such file for this 
                 // Alchemy plugin, we opt set these up here.
-                var endpointAddress = new EndpointAddress(new Uri(files[2]));
+                var endpointAddress = new EndpointAddress(request.importExportEndpointAddress);
                 var binding = new BasicHttpBinding();
                 binding.Name = "ImportExport_basicHttpBinding";
                 binding.Security.Mode = BasicHttpSecurityMode.TransportCredentialOnly;
                 binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.Windows;
-                //binding.MaxReceivedMessageSize = int.MaxValue;
-                //binding.
-
                 var importExportClient = new ImportExportServiceClient(binding, endpointAddress);
-                importExportClient.ClientCredentials.UseIdentityConfiguration = true;
-                importExportClient.ChannelFactory.Credentials.UseIdentityConfiguration = true;
-
-                // Remove "user=" from files[0] and "password=" from files[1] to get the credentials.
-                string user = files[0].Substring(5);
-                string password = files[1].Substring(9);
-                var credentials = new NetworkCredential(user, password);//"Administrator", "xxxxxxx");
+                ////importExportClient.ClientCredentials.UseIdentityConfiguration = true;
+                ////importExportClient.ChannelFactory.Credentials.UseIdentityConfiguration = true;
                 importExportClient.ChannelFactory.Credentials.Windows.ClientCredential = credentials;
-
-                // No Impersonate() method available here:
-                //string username = GetUserName();
-                //importExportClient.ClientCredentials.Impersonate(username);
 
                 // TODO: Work on these settings
                 // e.g. June Test Comp 2016 goes in package twice for some reason, currently (even though it's not localized, etc.):
@@ -139,54 +144,10 @@ namespace LatestItems.Controllers
                 {
                     // Use the same credentials as the above client
                     // TODO: validate outputFileWithPath
-                    DownloadPackage(processId, request.outputFileWithPath, credentials); // @"C:\Packages\exported.zip", credentials);
+                    DownloadPackage(processId, request.outputFileWithPath, credentials, request.streamDownloadAddress);
                 }
 
-
-                output += "here1" + System.Environment.NewLine;
-
-                // hex:
-                string tryDecryptingThisHex = request.encryptedPasswordAsHexString;
-                    //"7883b11ab14c4b219a01fe193420d4595e4cf71eff8898d1f4aab0ca37ba84fe20b4288b8c7515885865a25050377b36026a55c045325cbaa949a5ff55441490a3f11088f1880d7ceef1c32b748124c19d1288447650abb548e6b1dd175c9aee09806b8c59769d52a5a5b1a9c1aff3448a795bae3c59223136bdd7322e1b2523";
-                // "foobar" is the expected output when decrypting this input hex
-
-
-                output += "here2" + System.Environment.NewLine;
-
-                int NumberChars = tryDecryptingThisHex.Length;
-
-                output += "here3" + System.Environment.NewLine + tryDecryptingThisHex + System.Environment.NewLine;
-
-                byte[] tryDecryptingThisBytes = new byte[NumberChars / 2];
-                for (int i = 0; i < NumberChars; i += 2)
-                    tryDecryptingThisBytes[i / 2] = Convert.ToByte(tryDecryptingThisHex.Substring(i, 2), 16);
-
-                output += "here4" + System.Environment.NewLine + tryDecryptingThisBytes.ToString() + System.Environment.NewLine;
-
-                foreach(byte byt in tryDecryptingThisBytes)
-                {
-                    output += "here4b: byt: " + byt + System.Environment.NewLine;
-                }
-
-
-                    //we want to decrypt, therefore we need a csp and load our private key
-                    ////var cspTest = new RSACryptoServiceProvider();
-                    /////cspTest.ImportParameters(privKeyTest);
-
-                    //decrypt and strip pkcs#1.5 padding
-                    var bytesPlainTextDataTest = csp.Decrypt(tryDecryptingThisBytes, false);
-
-                    output += "here5" + System.Environment.NewLine;
-
-                    //get our original plainText back...
-                    // Note: bytes are apparently representing a UTF8 version of the decrypted text.
-                    var plainTextData = System.Text.Encoding.UTF8.GetString(bytesPlainTextDataTest);
-
-                    output += "here6" + System.Environment.NewLine;
-
-                    output += "*** " + plainTextData + " ***";// +System.Environment.NewLine + System.Environment.NewLine + privKeyStringTest;
-                    //output += "*** " + tryDecryptingThisHex + " ** " + tryDecryptingThisBytes.ToString() + " ***";
-
+                output += "Success";
             }
             catch(Exception e)
             {
@@ -197,7 +158,7 @@ namespace LatestItems.Controllers
                 // Get the line number from the stack frame
                 var line = frame.GetFileLineNumber();
 
-                output += e.ToString() + System.Environment.NewLine + System.Environment.NewLine + e.StackTrace + "line: " + line;
+                output += e.ToString() + System.Environment.NewLine + e.StackTrace + System.Environment.NewLine + "Line: " + line;
             }
 
             return output;
@@ -220,10 +181,10 @@ namespace LatestItems.Controllers
             while (true);
         }
 
-        private void DownloadPackage(string processId, string packageLocation, NetworkCredential credentials)
+        private void DownloadPackage(string processId, string packageLocation, NetworkCredential credentials, string streamDownloadAddress)
         {
             // These settings are taken from Tridion.ContentManager.ImportExport.Common.dll:
-            var endpointAddress = new EndpointAddress(new Uri("http://localhost:81/webservices/ImportExportService2013.svc/streamDownload_basicHttp"));
+            var endpointAddress = new EndpointAddress(new Uri(streamDownloadAddress));
             var binding = new BasicHttpBinding();
             binding.Name = "streamDownload_basicHttp_2013";
             binding.Security.Mode = BasicHttpSecurityMode.TransportCredentialOnly;
@@ -474,7 +435,7 @@ namespace LatestItems.Controllers
                 // Creates a new core service client
                 client = new SessionAwareCoreServiceClient("netTcp_2013");
                 // Gets the current user so we can impersonate them for our client
-                 string username = GetUserName();
+                string username = GetUserName();
                 client.Impersonate(username);
 
                 // Start building up a string of html to return, including headings for the table that the html will represent.
