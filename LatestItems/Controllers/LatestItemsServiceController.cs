@@ -1,9 +1,11 @@
 using Alchemy4Tridion.Plugins;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Reflection;
+using System.Security.Cryptography;
 using System.ServiceModel;
+using System.Text;
 using System.Threading;
 using System.Web;
 using System.Web.Http;
@@ -11,9 +13,6 @@ using System.Xml.Linq;
 using Tridion.ContentManager.CoreService.Client;
 using Tridion.ContentManager.ImportExport;
 using Tridion.ContentManager.ImportExport.Client;
-using System.Security.Cryptography;
-using System.Text;
-using System.Diagnostics;
 
 namespace LatestItems.Controllers
 {
@@ -32,15 +31,6 @@ namespace LatestItems.Controllers
         // Made static to persist across multiple POST and GET calls.
         // TODO: Look into a better way to do this.
         static RSACryptoServiceProvider csp;
-
-        // Dummy method needed, as I could not figure out how to get JS running properly without it.
-        // TODO: Find a way to remove this dummy method.
-        [HttpGet]
-        [Route("DummyItems")]
-        public string GetDummyItems()
-        {
-            return "";
-        }
 
         [HttpGet]
         [Route("ExportEndpointAndStreamDownloadAddresses")]

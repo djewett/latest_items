@@ -14,10 +14,6 @@
     var url = location.href;
     var tcm = url.substring(url.indexOf("uri=tcm%3A") + 10, url.indexOf("#"));
 
-
-
-
-
     // Retrieve fields to populate endpoint address text fields, if they have been set previously.
     Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportEndpointAndStreamDownloadAddresses()
     .success(function (addresses) {
@@ -30,126 +26,133 @@
         console.log("There was an error", error.message);
     })
     .complete(function () {
+        // Call main function from here to ensure proper scope is used (to allow access to Tridion-specific JS, like $models).
+        updateLatestItems(tcm);
     });
-
-
-    // DJ added:
-    //$tcmutils.getPublicationIdFromItemId(tcm)
-    //$j("#publicationUrl").val("tcm:" + tcm);
-
-
-
-
-
-    // On page load I display the items not in use within the folder defined by tcm.
-    updateLatestItems(tcm);
 
     /**
      * Takes a TCM ID for a Tridion folder and retrieves the a list of the contained items that are latest items.
      */
     function updateLatestItems(tcmInput) {
+        // Currently, tcm:0 is entered in cases where no folder or publication is selected, when either the context menu or ribbon bar is used
+        // to load the Latest Items popup:
+        if ((tcmInput != "0") && (tcmInput != "")) {
+            var pubTitle = $models.getItem("tcm:" + tcmInput).getPublication().getStaticTitle();
+            $j("#publicationName").val(pubTitle);
+        }
 
-        //////$j("#progBar").remove().success(function (items) {
-        //////})
-        //////.error(function (type, error) {
-        //////})
-        //////.complete(function () {
-        //////});;
+        if ($models.isContainerItemType($models.getItem("tcm:" + tcmInput).getItemType()))
+        {
+            $j("#folderId").val("");
+        }
 
+        var user = Tridion.UI.UserSettings.getJsonUserSettings(true).User.Data.Name;
+        $j("#userId").val(user);
 
+        $j("#exportUser").val(user);
 
+        var now = new Date();
+        var nowMonth = now.getMonth() + 1;
+        $j("#endDate_date").val(nowMonth + "/" + now.getDate() + "/" + now.getFullYear());
+        var nowHours = now.getHours();
+        var ampm = nowHours >= 12 ? 'PM' : 'AM'; // Needs to be done before nowHours are manipulated
+        nowHours = nowHours % 12;
+        nowHours = nowHours ? nowHours : 12; // the hour '0' should be '12'
+        var nowMinutes = now.getMinutes();
+        nowMinutes = nowMinutes < 10 ? '0' + nowMinutes : nowMinutes;
+        var nowSeconds = now.getSeconds();
+        nowSeconds = nowSeconds < 10 ? '0' + nowSeconds : nowSeconds;
+        var nowTime = nowHours + ":" + nowMinutes + ":" + nowSeconds + " " + ampm;
+        $j("#endDate_time").val(nowTime);
 
+        var yesterday = new Date();
+        yesterday.setDate(now.getDate() - 1);
+        var yestMonth = yesterday.getMonth() + 1;
+        $j("#startDate_date").val(yestMonth + "/" + yesterday.getDate() + "/" + yesterday.getFullYear());
+        // Time will always be the exact same as now:
+        $j("#startDate_time").val(nowTime);
 
-        // This is the call to my controller where the core service code is used to gather the
-        // latest items information. It is returned as a string of HTML.
-        // NOTE: Dummy method needed here, as removing function call here stops JS from running properly.
-        // TODO: Try to remove this dummy method call
-        Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getDummyItems()
-        .success(function (items) {
+        // First arg in success is what's returned by your controller's action
 
+        // Upon successful retrieval of latest items, we want to remove the progress bar and add the latest items to the markup
+        // (there is a progress bar by default in the markup in LatestItems.aspx, as the search starts automatically when the 
+        // popup is open).
+        $j("#progBar").remove();
+        $j(".tab-body.active").append("");
 
-
-
-            // Currently, tcm:0 is entered in cases where no folder or publication is selected, when either the context menu or ribbon bar is used
-            // to load the Latest Items popup:
-            if ((tcmInput != "0") && (tcmInput != "")) {
-                var pubTitle = $models.getItem("tcm:" + tcmInput).getPublication().getStaticTitle();
-                $j("#publicationName").val(pubTitle);
-            }
-
-            if ($models.isContainerItemType($models.getItem("tcm:" + tcmInput).getItemType()))
+        // We want to have an action when we click anywhere on the tab body
+        // that isn't a used or using item
+        $j(".tab-body").mouseup(function (e) {
+            // To do this we first find the results item containing the latest items
+            var results = $j(".results");
+            if (!results.is(e.target) // if the target of the click isn't the results...
+            && results.has(e.target).length === 0) // ... nor a descendant of the results
             {
-                $j("#folderId").val("");
+                // Call a function to deselect the current item
+                deselectItems();
             }
+        });
 
-            var user = Tridion.UI.UserSettings.getJsonUserSettings(true).User.Data.Name;
-            $j("#userId").val(user);
-
-            $j("#exportUser").val(user);
-
-            var now = new Date();
-            var nowMonth = now.getMonth() + 1;
-            $j("#endDate_date").val(nowMonth + "/" + now.getDate() + "/" + now.getFullYear());
-            var nowHours = now.getHours();
-            var ampm = nowHours >= 12 ? 'PM' : 'AM'; // Needs to be done before nowHours are manipulated
-            nowHours = nowHours % 12;
-            nowHours = nowHours ? nowHours : 12; // the hour '0' should be '12'
-            var nowMinutes = now.getMinutes();
-            nowMinutes = nowMinutes < 10 ? '0' + nowMinutes : nowMinutes;
-            var nowSeconds = now.getSeconds();
-            nowSeconds = nowSeconds < 10 ? '0' + nowSeconds : nowSeconds;
-            var nowTime = nowHours + ":" + nowMinutes + ":" + nowSeconds + " " + ampm;
-            $j("#endDate_time").val(nowTime);
-
-            var yesterday = new Date();
-            yesterday.setDate(now.getDate() - 1);
-            var yestMonth = yesterday.getMonth() + 1;
-            $j("#startDate_date").val(yestMonth + "/" + yesterday.getDate() + "/" + yesterday.getFullYear());
-            // Time will always be the exact same as now:
-            $j("#startDate_time").val(nowTime);
-
-            // First arg in success is what's returned by your controller's action
-
-            // Upon successful retrieval of latest items, we want to remove the progress bar and add the latest items to the markup
-            // (there is a progress bar by default in the markup in LatestItems.aspx, as the search starts automatically when the 
-            // popup is open).
-            $j("#progBar").remove();
-            $j(".tab-body.active").append(items);
-
-            // We want to have an action when we click anywhere on the tab body
-            // that isn't a used or using item
-            $j(".tab-body").mouseup(function (e) {
-                // To do this we first find the results item containing the latest items
-                var results = $j(".results");
-                if (!results.is(e.target) // if the target of the click isn't the results...
-                && results.has(e.target).length === 0) // ... nor a descendant of the results
-                {
-                    // Call a function to deselect the current item
-                    deselectItems();
-                }
+        // The refresh button should always be enabled. It essentially re-runs the entire getLatestItems procedure, 
+        // discarding any previously returned items. You may want to use this, for instance, in the scenario where you
+        // have a component that is linked to. Once the linking component is deleted, the component linked to may no
+        // longer be used, and so a refresh is required.
+        // TODO: consider ways to make this more efficient (i.e. by only re-running the getLatestItems procedure for items
+        // linked to from an item that is deleted). And then consider running this automatically after each deletion.
+        $j("#refresh_items").click(function () {
+            // When the refresh button is clicked, we want to clear out the markup for the list of items and add a progress bar, indicating 
+            // a new search for the unused items has begun.
+            $j(".tab-body.active").html("");
+            $j(".tab-body.active").append("<progress id=\"progBar\"></progress>");
+            // Call the same getLatestItems() Web API function that is used when the popup is first open.
+            Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItems({tcmOfContainer: tcmInput,
+                                                                                    publication: $j("#publicationName").val(),
+                                                                                    user: $j("#userId").val(),
+                                                                                    startTime: $j("#startDate_date").val() + " " + $j("#startDate_time").val(),
+                                                                                    endTime: $j("#endDate_date").val() + " " + $j("#endDate_time").val()})
+            .success(function (items) {
+                // Upon successful retrieval of latest items, we want to remove the progress bar and add the latest items to the markup.
+                $j("#progBar").remove();
+                $j(".tab-body.active").append(items);
+            })
+            .error(function (type, error) {
+                // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
+                // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
+                console.log("There was an error", error.message);
+            })
+            .complete(function () {
+                // this is called regardless of success or failure.
+                deselectItems();
+                setupForItemClicked();
             });
+        });
 
-            // The refresh button should always be enabled. It essentially re-runs the entire getLatestItems procedure, 
-            // discarding any previously returned items. You may want to use this, for instance, in the scenario where you
-            // have a component that is linked to. Once the linking component is deleted, the component linked to may no
-            // longer be used, and so a refresh is required.
-            // TODO: consider ways to make this more efficient (i.e. by only re-running the getLatestItems procedure for items
-            // linked to from an item that is deleted). And then consider running this automatically after each deletion.
-            $j("#refresh_items").click(function () {
-                // When the refresh button is clicked, we want to clear out the markup for the list of items and add a progress bar, indicating 
-                // a new search for the unused items has begun.
-                $j(".tab-body.active").html("");
-                $j(".tab-body.active").append("<progress id=\"progBar\"></progress>");
-                // Call the same getLatestItems() Web API function that is used when the popup is first open.
-                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItems({tcmOfContainer: tcmInput,
-                                                                                        publication: $j("#publicationName").val(),
-                                                                                        user: $j("#userId").val(),
-                                                                                        startTime: $j("#startDate_date").val() + " " + $j("#startDate_time").val(),
-                                                                                        endTime: $j("#endDate_date").val() + " " + $j("#endDate_time").val()})
+        $j("#export_config").click(function () {
+
+            $j("#export_config_text").html("");
+
+            // Retrieve public key (modulus and exponent) from Alchemy.Plugins["${PluginName}"].Api
+            Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getPublicKeyModulusAndExponent()
+            .success(function (publicKey) {
+                var rsa = new RSAKey();
+                // modulus is stored in first element returned array and exponent in the second element.
+                rsa.setPublic(publicKey[0], publicKey[1]);
+                var encryptedPWAsHexString = rsa.encrypt($j("#exportPassword").val());
+                // Convert an array of all tcms to a string:
+                var theTcmString = $j(".item .id").text().toString();
+                // Replace the "tcm:" substrings with commas, since we can't pass ":"
+                theTcmString = theTcmString.replace(/tcm:/g, ",tcm:");
+                // Remove the comma at the very beginning:
+                theTcmString = theTcmString.substr(1);
+                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig({
+                    input: theTcmString,
+                    outputFileWithPath: $j("#exportPackage").val(),
+                    encryptedPasswordAsHexString: encryptedPWAsHexString,
+                    importExportEndpointAddress: $j("#exportEndPointAddress").val(),
+                    streamDownloadAddress: $j("#streamDownloadAddress").val()
+                })
                 .success(function (items) {
-                    // Upon successful retrieval of latest items, we want to remove the progress bar and add the latest items to the markup.
-                    $j("#progBar").remove();
-                    $j(".tab-body.active").append(items);
+                    $j("#export_config_text").html(items);
                 })
                 .error(function (type, error) {
                     // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
@@ -161,68 +164,20 @@
                     deselectItems();
                     setupForItemClicked();
                 });
-            });
-
-            $j("#export_config").click(function () {
-
-                $j("#export_config_text").html("");
-
-                // Retrieve public key (modulus and exponent) from Alchemy.Plugins["${PluginName}"].Api
-                Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getPublicKeyModulusAndExponent()
-                .success(function (publicKey) {
-                    var rsa = new RSAKey();
-                    // modulus is stored in first element returned array and exponent in the second element.
-                    rsa.setPublic(publicKey[0], publicKey[1]);
-                    var encryptedPWAsHexString = rsa.encrypt($j("#exportPassword").val());
-                    // Convert an array of all tcms to a string:
-                    var theTcmString = $j(".item .id").text().toString();
-                    // Replace the "tcm:" substrings with commas, since we can't pass ":"
-                    theTcmString = theTcmString.replace(/tcm:/g, ",tcm:");
-                    // Remove the comma at the very beginning:
-                    theTcmString = theTcmString.substr(1);
-                    Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportConfig({
-                        input: theTcmString,
-                        outputFileWithPath: $j("#exportPackage").val(),
-                        encryptedPasswordAsHexString: encryptedPWAsHexString,
-                        importExportEndpointAddress: $j("#exportEndPointAddress").val(),
-                        streamDownloadAddress: $j("#streamDownloadAddress").val()
-                    })
-                    .success(function (items) {
-                        $j("#export_config_text").html(items);
-                    })
-                    .error(function (type, error) {
-                        // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
-                        // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
-                        console.log("There was an error", error.message);
-                    })
-                    .complete(function () {
-                        // this is called regardless of success or failure.
-                        deselectItems();
-                        setupForItemClicked();
-                    });
-                })
-                .error(function (type, error) {
-                    // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
-                    // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
-                console.log("There was an error", error.message);
-                })
-                .complete(function () {
-                    // this is called regardless of success or failure.
-                    deselectItems();
-                    setupForItemClicked();
-                });
-            });
-
-            setupForItemClicked();
-        })
-        .error(function (type, error) {
-            // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
-            // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
+            })
+            .error(function (type, error) {
+                // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
+                // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
             console.log("There was an error", error.message);
-        })
-        .complete(function () {
-            // this is called regardless of success or failure.
+            })
+            .complete(function () {
+                // this is called regardless of success or failure.
+                deselectItems();
+                setupForItemClicked();
+            });
         });
+
+        setupForItemClicked();
     }
 
     /**
