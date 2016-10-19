@@ -18,6 +18,21 @@
 
 
 
+    // Retrieve fields to populate endpoint address text fields, if they have been set previously.
+    Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportEndpointAndStreamDownloadAddresses()
+    .success(function (addresses) {
+        $j("#exportEndPointAddress").val(addresses[0]);
+        $j("#streamDownloadAddress").val(addresses[1]);
+    })
+    .error(function (type, error) {
+        // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
+        // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
+        console.log("There was an error", error.message);
+    })
+    .complete(function () {
+    });
+
+
     // DJ added:
     //$tcmutils.getPublicationIdFromItemId(tcm)
     //$j("#publicationUrl").val("tcm:" + tcm);
@@ -41,12 +56,19 @@
         //////.complete(function () {
         //////});;
 
+
+
+
+
         // This is the call to my controller where the core service code is used to gather the
         // latest items information. It is returned as a string of HTML.
         // NOTE: Dummy method needed here, as removing function call here stops JS from running properly.
         // TODO: Try to remove this dummy method call
         Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getDummyItems()
         .success(function (items) {
+
+
+
 
             // Currently, tcm:0 is entered in cases where no folder or publication is selected, when either the context menu or ribbon bar is used
             // to load the Latest Items popup:
@@ -119,11 +141,6 @@
                 $j(".tab-body.active").html("");
                 $j(".tab-body.active").append("<progress id=\"progBar\"></progress>");
                 // Call the same getLatestItems() Web API function that is used when the popup is first open.
-                // TODO: Use POST, instead of string replacements to pass via query with GET:
-                //Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItemsOld(tcmInput,
-                //                                                                       $j("#startDate_date").val() + " " + $j("#startDate_time").val().replace(/:/g, "~"),
-                //                                                                       $j("#endDate_date").val() + " " + $j("#endDate_time").val().replace(/:/g, "~"))
-                // Note: tcmOfContainer can be for a publication, folder, structure group, etc.
                 Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItems({tcmOfContainer: tcmInput,
                                                                                         publication: $j("#publicationName").val(),
                                                                                         user: $j("#userId").val(),

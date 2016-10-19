@@ -43,6 +43,112 @@ namespace LatestItems.Controllers
         }
 
         [HttpGet]
+        [Route("ExportEndpointAndStreamDownloadAddresses")]
+        public string[] GetExportEndpointAndStreamDownloadAddresses()
+        {
+            string[] exportEndpointAndStreamDownloadAddresses = {string.Empty, string.Empty};
+
+            // Create a new, null Core Service Client
+            SessionAwareCoreServiceClient client = null;
+            // TODO: Use Client, not client (then you don't have to worry about handling abort/dispose/etc.). <- Alchemy version 7.0 or higher
+            // With Client, no need to call client.Abort();
+            // Can we also remove catch block below if using Client?
+
+            try
+            {
+                // Creates a new core service client
+                client = new SessionAwareCoreServiceClient("netTcp_2013");
+                // Gets the current user so we can impersonate them for our client
+                string username = GetUserName();
+                client.Impersonate(username);
+
+                // App data is set up with the following parameters.
+                ////string applicationId = "latestItemsApp";
+                string exportEndpointId = "exportEndpointAddr";
+                string streamDownloadId = "streamDownloadAddr";
+
+                ApplicationData appData = client.ReadApplicationData(null, exportEndpointId);//// exportEndpointId, applicationId);
+                if (appData != null)
+                {
+                    Byte[] data = appData.Data;
+                    // exportEndpointId corresponds to the first element of the array return value.
+                    exportEndpointAndStreamDownloadAddresses[0] = Encoding.Unicode.GetString(data);
+                }
+
+                appData = client.ReadApplicationData(null, streamDownloadId);// streamDownloadId, applicationId);
+                if (appData != null)
+                {
+                    Byte[] data = appData.Data;
+                    // streamDownloadId corresponds to the second element of the array return value.
+                    exportEndpointAndStreamDownloadAddresses[1] = Encoding.Unicode.GetString(data);
+                }
+
+                // Explicitly abort to ensure there are no memory leaks.
+                client.Abort();
+            }
+            catch (Exception ex)
+            {
+                // Proper way of ensuring that the client gets closed... we close it in our try block above,
+                // then in a catch block if an exception is thrown we abort it.
+                if (client != null)
+                {
+                    client.Abort();
+                }
+
+                // We are rethrowing the original exception and just letting webapi handle it.
+                throw ex;
+            }
+
+            return exportEndpointAndStreamDownloadAddresses;
+        }
+
+        private void SetAppDataAddress(string id, string address)
+        {
+            // Create a new, null Core Service Client
+            SessionAwareCoreServiceClient client = null;
+            // TODO: Use Client, not client (then you don't have to worry about handling abort/dispose/etc.). <- Alchemy version 7.0 or higher
+            // With Client, no need to call client.Abort();
+            // Can we also remove catch block below if using Client?
+
+            // TODO: Update to pass internal part of below snippet as a function (to reuse try-catch pattern)
+
+            try
+            {
+                // Creates a new core service client
+                client = new SessionAwareCoreServiceClient("netTcp_2013");
+                // Gets the current user so we can impersonate them for our client
+                string username = GetUserName();
+                client.Impersonate(username);
+
+                ////string applicationId = "latestItemsApp";
+
+                Byte[] byteData = Encoding.Unicode.GetBytes(address);
+                ApplicationData appData = new ApplicationData
+                {
+                    ApplicationId = id,////applicationId,
+                    Data = byteData////,
+                    ////TypeId = url.GetType().ToString()
+                };
+                client.SaveApplicationData(null, new[] { appData });////id, new[] { appData });
+
+                // Explicitly abort to ensure there are no memory leaks.
+                client.Abort();
+            }
+            catch (Exception ex)
+            {
+                // Proper way of ensuring that the client gets closed... we close it in our try block above,
+                // then in a catch block if an exception is thrown we abort it.
+                if (client != null)
+                {
+                    client.Abort();
+                }
+
+                // We are rethrowing the original exception and just letting webapi handle it.
+                throw ex;
+            }
+        }
+
+        [HttpGet]
         [Route("PublicKeyModulusAndExponent")]
         public string[] GetPublicKeyModulusAndExponent()
         {
@@ -99,6 +205,10 @@ namespace LatestItems.Controllers
 
             try
             {
+                // Set up the app data for storing the endpoint addresses first, to ensure they get persisted.
+                SetAppDataAddress("exportEndpointAddr", request.importExportEndpointAddress);
+                SetAppDataAddress("streamDownloadAddr", request.streamDownloadAddress);
+
                 // Retrieve credentials.
                 string username = GetUserName();
                 // Password comes in as a hex string from the request.
@@ -384,199 +494,6 @@ namespace LatestItems.Controllers
                 ////System.IO.File.WriteAllText(@"C:\Users\Administrator\Desktop\WriteText.txt", extraTestHtml);
                 ////System.IO.File.WriteAllText(@"C:\Users\Administrator\Desktop\WriteText.txt", filter.ModifiedAfter + " // " + filter.ModifiedBefore);
                 ////extraTestHtml += "</div>";
-
-                // Close the div we opened above
-                html += "</div>";
-
-                // Explicitly abort to ensure there are no memory leaks.
-                client.Abort();
-
-                // Return the html we've built.
-                return html;
-            }
-            catch (Exception ex)
-            {
-                // Proper way of ensuring that the client gets closed... we close it in our try block above,
-                // then in a catch block if an exception is thrown we abort it.
-                if (client != null)
-                {
-                    client.Abort();
-                }
-
-                // We are rethrowing the original exception and just letting webapi handle it.
-                throw ex;
-            }
-        }
-
-        // GET /Alchemy/Plugins/HelloExample/api/LatestItemsService/LatestItems/tcm
-        /// <summary>
-        /// Finds the list of items not being used within a given Tridion folder (given by tcm).
-        /// object.
-        /// </summary>
-        /// <param name="tcmOfContainer">
-        /// The TCM ID of a Tridion container within which to find items that are latest items.
-        /// Tridion
-        /// <returns>
-        /// Formatted HTML containing a list of unused items contained by the input folder.
-        /// Tridion object
-        /// </returns>
-        [HttpGet]
-        [Route("LatestItems/{tcmOfContainer}/{startTime}/{endTime}")]
-        public string GetLatestItemsOld(string tcmOfContainer, string startTime, string endTime = "")
-        {
-            // Create a new, null Core Service Client
-            SessionAwareCoreServiceClient client = null;
-            // TODO: Use Client, not client (then you don't have to worry about handling abort/dispose/etc.). <- Alchemy version 7.0 or higher
-            // With Client, no need to call client.Abort();
-            // Can we also remove catch block below if using Client?
-
-            try
-            {
-                // Creates a new core service client
-                client = new SessionAwareCoreServiceClient("netTcp_2013");
-                // Gets the current user so we can impersonate them for our client
-                string username = GetUserName();
-                client.Impersonate(username);
-
-                // Start building up a string of html to return, including headings for the table that the html will represent.
-                string html = "<div class=\"usingItems results\" id=\"latestItemsList\">";
-                html += CreateItemsHeading();
-
-                // Create a filter to recursively search through a folder and find all schemas, components, templates, etc. that are latest items.
-                // TODO: Add support for ItemType.Keyword.
-                var filterData = new OrganizationalItemItemsFilterData();
-                filterData.ItemTypes = new[]{ItemType.Schema,
-                                             ItemType.Component,
-                                             ItemType.TemplateBuildingBlock,
-                                             ItemType.ComponentTemplate,
-                                             ItemType.PageTemplate};
-                // When using OrganizationalItemItemsFilterData, we need to explicitly set a flag to include paths in resultXml.
-                filterData.IncludePathColumn = true;
-                filterData.Recursive = true;
-
-
-
-
-                //////IdentifiableObjectData xxx = new FolderData();
-                //////xxx.Id = tcmOfFolder;
-
-                var filter2 = new SearchQueryData();
-                filter2.BaseColumns = ListBaseColumns.IdAndTitle;
-            //$folderLink = New-Object Tridion.ContentManager.CoreService.Client.LinkToIdentifiableObjectData
-            //$folderLink.IdRef = $folder.Id
-            //$filter.SearchIn = $folderLink
-                //tcmOfFolder
-                filter2.SearchIn = new LinkToIdentifiableObjectData { Title = "Copy 2 of Folder3", IdRef = "tcm:1006-2119-2"/*tcmOfFolder*/ };
-                //filter2.FromRepository = new LinkToPublicationData() { IdRef = "tcm:0-1006-1" };
-                //filter2.FromRepository = new LinkToRepositoryData { IdRef = "tcm:0-1006-1" };
-                //filter2.BlueprintStatus = SearchBlueprintStatus.Local; // or anything else
-                //filter2.FromRepository = new LinkToPublicationData { IdRef = tcmOfFolder };
-                filter2.SearchInSubtree = true; /////// ??????
-                filter2.ItemTypes = new[]{//ItemType.Schema,
-                                             ItemType.Component,
-                                             //ItemType.TemplateBuildingBlock,
-                                             //ItemType.ComponentTemplate,
-                                             //ItemType.PageTemplate,
-                                             ItemType.Publication,
-                                                ItemType.Folder};
-                //filter2.IncludeLocationInfoColumns = true; /////// ??????
-                filter2.ModifiedAfter = new System.DateTime(2016, 05, 21, 1, 0, 0, DateTimeKind.Unspecified); //DateTime.Today;
-                //filter2.ModifiedAfter.Value.Subtract(System.TimeSpan.FromHours(3.0));
-                filter2.ModifiedBefore = DateTime.Now; //new System.DateTime(2016, 05, 23, 1, 0, 0, 0); //DateTime.Now;
-
-
-                SearchQueryData filter3 = new SearchQueryData();
-                //string id3 = "tcm:1006-2119-2";
-                //folder.IdRef = id3;
-                //filter3.SearchIn = new LinkToIdentifiableObjectData { Title = "Copy 2 of Folder3", IdRef = "tcm:1006-2119-2"/*tcmOfFolder*/ }; //folder;
-                //filter3.ModifiedAfter = Convert.ToDateTime("05/20/16");
-                //filter3.ModifiedAfter = DateTime.Now.AddDays(-1);
-
-                // TODO: Add check for valid start and end times:
-
-                if (String.IsNullOrEmpty(startTime))
-                {
-                    filter3.ModifiedAfter = DateTime.Now.AddDays(-1);
-                }
-                else
-                {
-                    filter3.ModifiedAfter = Convert.ToDateTime(startTime.Replace('-', '/').Replace('~', ':'));
-                }
-
-                if(String.IsNullOrEmpty(endTime))
-                {
-                    filter3.ModifiedBefore = DateTime.Now;
-                }
-                else
-                {
-                    filter3.ModifiedBefore = Convert.ToDateTime(endTime.Replace('-', '/').Replace('~', ':'));
-                }
-
-                filter3.IncludeLocationInfoColumns = true;
-                //var results = client.GetSearchResults(filter);
-
-                //filter3.FromRepository = new LinkToRepositoryData() { Title = "Building Blocks", IdRef = "tcm:0-1006-1" };
-                filter3.SearchIn = new LinkToIdentifiableObjectData { IdRef = "tcm:0-1006-1"/*tcmOfFolder*/ };
-
-                //////var items = client.GetSearchResults(filter3);
-
-                //////if(items.Length > 0)
-                //////{
-                //////    html += CreateItemsHeading();
-                //////}
-
-                //filter2.ItemTypes = new[]{//ItemType.Schema,
-                //                             ItemType.Component,
-                //                             //ItemType.TemplateBuildingBlock,
-                //                             //ItemType.ComponentTemplate,
-                //                             //ItemType.PageTemplate,
-                //                             ItemType.Publication,
-                //                                ItemType.Folder,
-                //ItemType.Category};
-
-                foreach (IdentifiableObjectData item in client.GetSearchResults(filter3))
-                {
-                    string path = "";
-                    if(item is RepositoryLocalObjectData)
-                    {
-                        path = ((RepositoryLocalObjectData)item).LocationInfo.Path;
-                    }
-
-                    string currItemHtml = "<div class=\"item\">";
-                    //currItemHtml += "<div class=\"icon\" style=\"background-image: url(/WebUI/Editors/CME/Themes/Carbon2/icon_v7.1.0.66.627_.png?name=" + item.Title + "&size=16)\"></div>";
-                    currItemHtml += "<div class=\"name\">" + item.Title + "</div>";
-                    currItemHtml += "<div class=\"path\">" + path + "</div>"; // TODO: retrieve correct path
-                    currItemHtml += "<div class=\"id\">" + item.Id + "</div>";
-                    currItemHtml += "</div>";
-
-                    html += currItemHtml;
-                }
-
-
-
-
-
-                // Use the filter to get the list of ALL items contained in the folder represented by tcmOfFolder.
-                // We have to add "tcm:" here because we can't pass a full tcm id (with colon) via a URL.
-                //////XElement resultXml = client.GetListXml("tcm:" + tcmOfFolder, filterData);
-
-                //////// Iterate over all items returned by the above filtered list returned.
-                //////foreach (XElement currentItem in resultXml.Nodes())
-                //////{
-                //////    var id = currentItem.Attribute("ID").Value;
-
-                //////    // Retrieve the list (as an XElement) of items that currently use currentItem.
-                //////    var usingFilter = new UsingItemsFilterData();
-                //////    usingFilter.IncludedVersions = VersionCondition.OnlyLatestVersions;
-                //////    XElement usingItemsXElement = client.GetListXml(id, usingFilter);
-
-                //////    // If there are no using elements, then currentItem is not in used and should be added to the html to return.
-                //////    if (!usingItemsXElement.HasElements)
-                //////    {
-                //////        html += CreateItem(currentItem) + System.Environment.NewLine;
-                //////        html += CreateItem(currentItem) + System.Environment.NewLine;
-                //////    }
-                //////}
 
                 // Close the div we opened above
                 html += "</div>";

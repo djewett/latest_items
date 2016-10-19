@@ -248,12 +248,12 @@
                 <div id="exportEndPointAddressFields" class="filterControl stack vertical">
                     <label>Import/Export service endpoint address:</label>
                     <br />
-	                <input id="exportEndPointAddress" class="stack-calc" value="http://localhost:81/webservices/ImportExportService2013.svc/basicHttp" />
+	                <input id="exportEndPointAddress" class="stack-calc" value="" />
                 </div>
                 <div id="streamDownloadAddressFields" class="filterControl stack vertical">
                     <label>Stream download endpoint address:</label>
                     <br />
-	                <input id="streamDownloadAddress" class="stack-calc" value="http://localhost:81/webservices/ImportExportService2013.svc/streamDownload_basicHttp" />
+	                <input id="streamDownloadAddress" class="stack-calc" value="" />
                 </div>
                 <div class="filterControl stack vertical">
                     <label>Output package:</label>
