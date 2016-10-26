@@ -14,6 +14,18 @@
     var url = location.href;
     var tcm = url.substring(url.indexOf("uri=tcm%3A") + 10, url.indexOf("#"));
 
+    Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getPathOfSelectedItem(tcm)
+    .success(function (path) {
+        $j("#folderId").val(path);
+    })
+    .error(function (type, error) {
+        // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
+        // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
+        console.log("There was an error", error.message);
+    })
+    .complete(function () {
+    });
+
     // Retrieve fields to populate endpoint address text fields, if they have been set previously.
     Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getExportEndpointAndStreamDownloadAddresses()
     .success(function (addresses) {
@@ -39,11 +51,6 @@
         if ((tcmInput != "0") && (tcmInput != "")) {
             var pubTitle = $models.getItem("tcm:" + tcmInput).getPublication().getStaticTitle();
             $j("#publicationName").val(pubTitle);
-        }
-
-        if ($models.isContainerItemType($models.getItem("tcm:" + tcmInput).getItemType()))
-        {
-            $j("#folderId").val("");
         }
 
         var user = Tridion.UI.UserSettings.getJsonUserSettings(true).User.Data.Name;
@@ -105,7 +112,7 @@
             $j(".tab-body.active").html("");
             $j(".tab-body.active").append("<progress id=\"progBar\"></progress>");
             // Call the same getLatestItems() Web API function that is used when the popup is first open.
-            Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItems({tcmOfContainer: tcmInput,
+            Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getLatestItems({pathOfContainer: $j("#folderId").val(),
                                                                                     publication: $j("#publicationName").val(),
                                                                                     user: $j("#userId").val(),
                                                                                     startTime: $j("#startDate_date").val() + " " + $j("#startDate_time").val(),
@@ -134,8 +141,9 @@
             // Retrieve public key (modulus and exponent) from Alchemy.Plugins["${PluginName}"].Api
             Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getPublicKeyModulusAndExponent()
             .success(function (publicKey) {
+                // Encrypt the password here so it is not being sent as plain text.
                 var rsa = new RSAKey();
-                // modulus is stored in first element returned array and exponent in the second element.
+                // Modulus is stored in first element returned array and exponent in the second element.
                 rsa.setPublic(publicKey[0], publicKey[1]);
                 var encryptedPWAsHexString = rsa.encrypt($j("#exportPassword").val());
                 // Convert an array of all tcms to a string:

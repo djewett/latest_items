@@ -225,14 +225,14 @@
 	                </div>
                     -->
                 </div>
-                <div class="filterControl stack vertical">
+                <div id="pubNameFields" class="filterControl stack vertical">
                     <label>Publication Name:</label>
 	                <input id="publicationName" class="stack-calc" type="text" style="width: 170px;" value="(All)" />
                 </div>
                 <!-- TODO: remove display:none from CSS for this container (folder/structure group/etc.) field and implement: -->
                 <div id="containerFields" class="filterControl stack vertical">
-                    <label>Folder ID (partial TCM):</label>
-	                <input id="folderId" class="stack-calc" type="text" style="width: 138px;" value="" />
+                    <label>Search In:</label>
+	                <input id="folderId" class="stack-calc" type="text" style="width: 212px;" value="" />
                 </div>
                 <div class="filterControl stack vertical">
                     <label>User:</label>
@@ -260,8 +260,8 @@
 	                <input id="exportPackage" class="stack-calc" type="text" style="width: 178px;" value="C:/Packages/exported.zip" />
                 </div>
                 <div id="exportPasswordFields" class="filterControl stack vertical">
-                    <label>Export Password:</label>
-	                <input id="exportPassword" class="stack-calc" type="password" style="width: 173px;" value="" />
+                    <label>Password:</label>
+	                <input id="exportPassword" class="stack-calc" type="password" style="width: 214px;" value="" />
                 </div>
                 <textarea id="export_config_text" name="Text1" cols="38" rows="20" readonly="readonly"></textarea>
             </div>
