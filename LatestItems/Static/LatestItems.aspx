@@ -209,27 +209,16 @@
                     <label class="timeLabel">Start Time:</label>
 	                <input id="startDate_date" class="stack-calc" type="text" style="width: 99px;" value="" />
 	                <input id="startDate_time" class="stack-calc" type="text" style="width: 100px;" value="">
-                    <!--
-	                <div id="startDate_selectbutton" class="tridion button stack-elem select" style="-webkit-user-select: none;">
-		                <span class="text">Select Date</span>
-	                </div>
-                    -->
                 </div>
                 <div id="endDate" class=" filterControl date stack vertical">
                     <label class="timeLabel">End Time:</label>
 	                <input id="endDate_date" class="stack-calc" type="text" style="width: 99px;" value="" />
 	                <input id="endDate_time" class="stack-calc" type="text" style="width: 100px;" value="">
-                    <!--
-	                <div id="endDate_selectbutton" class="tridion button stack-elem select" style="-webkit-user-select: none;">
-		                <span class="text">Select Date</span>
-	                </div>
-                    -->
                 </div>
                 <div id="pubNameFields" class="filterControl stack vertical">
                     <label>Publication Name:</label>
 	                <input id="publicationName" class="stack-calc" type="text" style="width: 170px;" value="(All)" />
                 </div>
-                <!-- TODO: remove display:none from CSS for this container (folder/structure group/etc.) field and implement: -->
                 <div id="containerFields" class="filterControl stack vertical">
                     <label>Search In:</label>
 	                <input id="folderId" class="stack-calc" type="text" style="width: 212px;" value="" />

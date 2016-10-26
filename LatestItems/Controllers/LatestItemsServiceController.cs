@@ -3,14 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.ServiceModel;
 using System.Text;
 using System.Threading;
 using System.Web;
 using System.Web.Http;
-using System.Xml;
 using System.Xml.Linq;
 using Tridion.ContentManager.CoreService.Client;
 using Tridion.ContentManager.ImportExport;
@@ -128,7 +126,6 @@ namespace LatestItems.Controllers
                 client.Impersonate(username);
 
                 // App data is set up with the following parameters.
-                ////string applicationId = "latestItemsApp";
                 string exportEndpointId = "exportEndpointAddr";
                 string streamDownloadId = "streamDownloadAddr";
 
@@ -188,6 +185,7 @@ namespace LatestItems.Controllers
                     ApplicationId = id,
                     Data = byteData
                 };
+
                 client.SaveApplicationData(null, new[] { appData });
 
                 // Explicitly abort to ensure there are no memory leaks.
@@ -358,8 +356,8 @@ namespace LatestItems.Controllers
             binding.MaxReceivedMessageSize = int.MaxValue;
 
             var downloadClient = new ImportExportStreamDownloadClient(binding, endpointAddress);
-            downloadClient.ClientCredentials.UseIdentityConfiguration = true; // TODO: this line needed?
-            downloadClient.ChannelFactory.Credentials.UseIdentityConfiguration = true; // TODO: this line needed?
+            downloadClient.ClientCredentials.UseIdentityConfiguration = true;
+            downloadClient.ChannelFactory.Credentials.UseIdentityConfiguration = true;
             downloadClient.ChannelFactory.Credentials.Windows.ClientCredential = credentials;
 
             using (var packageStream = downloadClient.DownloadPackage(processId, deleteFromServerAfterDownload: true))
@@ -453,7 +451,6 @@ namespace LatestItems.Controllers
                             IdRef = userId
                         };
                     }
-
                 }
 
                 filter.ItemTypes = new[]{ItemType.Schema,
@@ -479,13 +476,17 @@ namespace LatestItems.Controllers
 
                 var searchResults2 = client.GetSearchResults(filter);
 
-                // Merge the two searchResults arrays (union goes into searchResults):
+                // Merge the two searchResults arrays (local and localized; union goes into searchResults):
                 int array1OriginalLength = searchResults.Length;
                 Array.Resize<IdentifiableObjectData>(ref searchResults, array1OriginalLength + searchResults2.Length);
                 Array.Copy(searchResults2, 0, searchResults, array1OriginalLength, searchResults2.Length);
 
+                int row = 0;
+
                 foreach (IdentifiableObjectData item in searchResults)
                 {
+                    row++;
+
                     string path = "";
                     if (item is RepositoryLocalObjectData)
                     {
@@ -529,34 +530,19 @@ namespace LatestItems.Controllers
 
                     if (outputItem)
                     {
-                       // DataContractSerializer dcs = new DataContractSerializer(item.GetType());
-                       ////// XmlDocument document;
-                       // XDocument xDoc;
-                       // using (MemoryStream ms = new MemoryStream())
-                       // {
-                       //     dcs.WriteObject(ms, item);
-                       //     ms.Position = 0;
-                       //     //XmlElement itemAsXml = new XmlElement();
-                       //     //itemAsXml.Load(ms);
-                       //     ////document = new XmlDocument();
-                       //     ////document.Load(ms);
-                       //     xDoc = XDocument.Load(ms);
-                       // }
-
-                        //ItemsFilterData itemFilter = new ItemsFilterData();
-                        //filter.ItemTypes = new[] { ItemType.Schema };
-                        //filter.SchemaPurposes = new[] { SchemaPurpose.VirtualFolderType };
-                        //XElement list = client.GetListXml(item.Id, itemFilter);
-
-                        //list.Attribute("Icon").Value
-
                         string currItemHtml = "<div class=\"item\">";
-                        // TODO: Look at Not_Used to see how icon is retrieved:
-                        currItemHtml += "<div class=\"icon\" style=\"background-image: url(/WebUI/Editors/CME/Themes/Carbon2/icon_v7.1.0.66.627_.png?name=" + "xxx" + "&size=16)\"></div>";
+
+                        // Some JS magic is needed here to retrieve the icon and add it to the url by string replacement.
+                        // We need to do this in JS because the core service provides no access to an item's icon.
+                        currItemHtml += "<script>var icon = $models.getItem(\"" + item.Id + "\").getInfo().Icon;</script>";
+                        currItemHtml += "<div id=\"tempIconId" + row + "\" class=\"icon\" style=\"background-image: url(/WebUI/Editors/CME/Themes/Carbon2/icon_v7.1.0.66.627_.png?name=" + "****" + "&size=16)\">" + "" + "</div>";
+                        currItemHtml += "<script>document.getElementById('tempIconId" + row + "').outerHTML = document.getElementById('tempIconId" + row + "').outerHTML.replace(\"****\", icon);</script>";
+                        
                         currItemHtml += "<div class=\"name\">" + item.Title + "</div>";
                         currItemHtml += "<div class=\"path\">" + path + "</div>";
                         currItemHtml += "<div class=\"id\">" + item.Id + "</div>";
                         currItemHtml += "</div>";
+
                         html += currItemHtml;
                     }
                 }
