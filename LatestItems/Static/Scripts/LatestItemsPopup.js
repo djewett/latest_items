@@ -119,6 +119,7 @@
                                                                                     endTime: $j("#endDate_date").val() + " " + $j("#endDate_time").val()})
             .success(function (items) {
                 // Upon successful retrieval of latest items, we want to remove the progress bar and add the latest items to the markup.
+                $j("#export_config_text").val("");
                 $j("#progBar").remove();
                 $j(".tab-body.active").append(items);
             })
@@ -126,6 +127,8 @@
                 // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
                 // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
                 console.log("There was an error", error.message);
+                $j("#progBar").remove();
+                $j("#export_config_text").val(error.message);
             })
             .complete(function () {
                 // this is called regardless of success or failure.

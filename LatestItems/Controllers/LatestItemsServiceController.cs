@@ -420,11 +420,12 @@ namespace LatestItems.Controllers
 
                 filter.IncludeLocationInfoColumns = true;
 
-                if(!string.IsNullOrEmpty(request.publication) && !request.publication.Equals("(All)"))
+                if (!string.IsNullOrEmpty(request.pathOfContainer) && !request.pathOfContainer.Equals("(All)"))
                 {
                     // Assume publication field is valid publication name
                     // TODO: Validate here
                     string containerId = client.GetTcmUri(ConvertPathToWebdav(request.pathOfContainer), null, null);
+                    //string pubTcm = client.GetTcmUri("/webdav/" + request.publication, null, null);
                     filter.SearchIn = new LinkToIdentifiableObjectData { IdRef = containerId };
                 }
 
@@ -444,13 +445,8 @@ namespace LatestItems.Controllers
                         }
                     }
 
-                    if (!string.IsNullOrEmpty(userId))
-                    {
-                        filter.Author = new LinkToUserData()
-                        {
-                            IdRef = userId
-                        };
-                    }
+                    // If userId is not found, allow an empty string to be passed, which will trigger and error message.
+                    filter.Author = new LinkToUserData(){ IdRef = userId };
                 }
 
                 filter.ItemTypes = new[]{ItemType.Schema,
@@ -465,8 +461,6 @@ namespace LatestItems.Controllers
                                          ItemType.StructureGroup,
                                          ItemType.VirtualFolder,
                                          ItemType.Publication};
-
-                filter.SearchInSubtree = true;
 
                 filter.BlueprintStatus = SearchBlueprintStatus.Local;
 
@@ -499,34 +493,34 @@ namespace LatestItems.Controllers
                     // This is necessary to account for scenarios where one user creates an item, but another edits it at a later time, for instance.
                     // If no specific user is specified, DO NOT run these checks as they are expensive and not necessary in that case!
                     // Only perform this check for Versioned Items (i.e. not folders, etc.).
-                    if (!string.IsNullOrEmpty(request.user) && !request.user.Equals("(All)") && (item is VersionedItemData))
-                    {
-                        // Set flag to false by default and set back to true if we find a match.
-                        outputItem = false;
+                    ////if (!string.IsNullOrEmpty(request.user) && !request.user.Equals("(All)") && (item is VersionedItemData))
+                    ////{
+                    ////    // Set flag to false by default and set back to true if we find a match.
+                    ////    outputItem = false;
 
-                        VersionsFilterData versionsFilter = new VersionsFilterData();
-                        versionsFilter.IncludeRevisorDescriptionColumn = true;
-                        IdentifiableObjectData[] versionList = client.GetList(item.Id, versionsFilter);
+                    ////    VersionsFilterData versionsFilter = new VersionsFilterData();
+                    ////    versionsFilter.IncludeRevisorDescriptionColumn = true;
+                    ////    IdentifiableObjectData[] versionList = client.GetList(item.Id, versionsFilter);
 
-                        foreach (IdentifiableObjectData objectData in versionList)
-                        {
-                            var versionInfo = (FullVersionInfo)objectData.VersionInfo;
+                    ////    foreach (IdentifiableObjectData objectData in versionList)
+                    ////    {
+                    ////        var versionInfo = (FullVersionInfo)objectData.VersionInfo;
 
-                            // Check 2 things:
-                            // 1) that versionInfo.Revisor.Title == request.user
-                            // 2) that versionInfo.RevisionDate.Value is between filter.ModifiedAfter and filter2.ModifiedBefore
-                            // If we find a match, set outputItem to true and break the foreach loop.
+                    ////        // Check 2 things:
+                    ////        // 1) that versionInfo.Revisor.Title == request.user
+                    ////        // 2) that versionInfo.RevisionDate.Value is between filter.ModifiedAfter and filter2.ModifiedBefore
+                    ////        // If we find a match, set outputItem to true and break the foreach loop.
 
-                            if (versionInfo.Revisor.Title == request.user)
-                            {
-                                if ((objectData.VersionInfo.RevisionDate >= filter.ModifiedAfter) && (objectData.VersionInfo.RevisionDate <= filter.ModifiedBefore))
-                                {
-                                    outputItem = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    ////        if (versionInfo.Revisor.Title == request.user)
+                    ////        {
+                    ////            if ((objectData.VersionInfo.RevisionDate >= filter.ModifiedAfter) && (objectData.VersionInfo.RevisionDate <= filter.ModifiedBefore))
+                    ////            {
+                    ////                outputItem = true;
+                    ////                break;
+                    ////            }
+                    ////        }
+                    ////    }
+                    ////}
 
                     if (outputItem)
                     {
