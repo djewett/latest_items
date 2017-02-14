@@ -139,7 +139,7 @@
 
         $j("#export_config").click(function () {
 
-            $j("#export_config_text").html("");
+            $j("#export_config_text").val("");
 
             // Retrieve public key (modulus and exponent) from Alchemy.Plugins["${PluginName}"].Api
             Alchemy.Plugins["${PluginName}"].Api.LatestItemsService.getPublicKeyModulusAndExponent()
@@ -162,8 +162,8 @@
                     importExportEndpointAddress: $j("#exportEndPointAddress").val(),
                     streamDownloadAddress: $j("#streamDownloadAddress").val()
                 })
-                .success(function (items) {
-                    $j("#export_config_text").html(items);
+                .success(function (output) {
+                    $j("#export_config_text").val(output);
                 })
                 .error(function (type, error) {
                     // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
@@ -179,7 +179,7 @@
             .error(function (type, error) {
                 // First arg is a string that shows the type of error i.e. (500 Internal), 2nd arg is object representing
                 // the error.  For BadRequests and Exceptions, the error message will be in the error.message property.
-            console.log("There was an error", error.message);
+                console.log("There was an error", error.message);
             })
             .complete(function () {
                 // this is called regardless of success or failure.

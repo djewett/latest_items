@@ -25,7 +25,7 @@
         var items = selection.getItems();
         var item = $models.getItem(selection.getItem(0));
         // Checks if a container item has been selected.
-        if ($models.isContainerItemType(item.getItemType())) {
+        if ((item !== undefined) && $models.isContainerItemType(item.getItemType())) {
             return true;
         }
         else {

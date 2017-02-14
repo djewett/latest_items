@@ -51,8 +51,30 @@ namespace LatestItems.Controllers
                 string username = GetUserName();
                 client.Impersonate(username);
 
-                RepositoryLocalObjectData item = (RepositoryLocalObjectData)client.Read("tcm:" + tcm, new ReadOptions());
-                path = item.LocationInfo.Path + "\\" + item.Title;
+                if (String.Equals(tcm, "tcm:0") || String.Equals(tcm, "0"))
+                {
+                    // If it's tcm:0, we're dealing with the root element in the CMS's tree. In that case, simply
+                    // do nothing to return an empty path, indicating to search through the entire tree.
+                }
+                else
+                {
+                    var item = client.Read("tcm:" + tcm, new ReadOptions());
+
+                    if (item is RepositoryLocalObjectData)
+                    {
+                        path = ((RepositoryLocalObjectData)item).LocationInfo.Path + "\\" + item.Title;
+                    }
+                    else if(item is PublicationData)
+                    {
+                        // If the selection is not the root element and not a RepositoryLocalObjectData, 
+                        // then it's a publication.
+                        path = "\\" + ((PublicationData)item).Title;
+                    }
+                    else
+                    {
+                        // Do nothing - allow empty path to be return; handle any additional cases here, if they arise.
+                    }
+                }
 
                 // Explicitly abort to ensure there are no memory leaks.
                 client.Abort();
@@ -256,9 +278,24 @@ namespace LatestItems.Controllers
         [Route("ExportConfig")]
         public string GetExportConfig(ExportConfigRequest request)
         {
-            string[] tcms = request.input.Split(',');
+            string output = String.Empty;
 
-            string output = "";
+            // Check that outputFileWithPath yields a valid, existing folder.
+            string folder = Path.GetDirectoryName(request.outputFileWithPath);
+            if (!Directory.Exists(folder) || !request.outputFileWithPath.EndsWith(".zip"))
+            {
+                output = "Please ensure the Output Package is a valid full path with filename ending in \".zip\". Please ensure the specified folder is an existing folder.";
+                return output;
+            }
+
+            if (String.IsNullOrEmpty(request.input))
+            {
+                output = "No valid items have been found to export.";
+                return output;
+            }
+
+            // Do this only after checking above if the request.input string is null or empty
+            string[] tcms = request.input.Split(',');
 
             ImportExportServiceClient importExportClient = null;
 
