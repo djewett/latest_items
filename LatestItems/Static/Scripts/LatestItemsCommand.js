@@ -1,5 +1,5 @@
 ﻿/**
- * Creates an anguilla command using a wrapper shorthand. Command is responsible for communicating wtih api controller
+ * Creates an anguilla command using a wrapper shorthand. Command is responsible for communicating with api controller
  *
  * Note the ${PluginName} will get replaced by the actual plugin name.
  */

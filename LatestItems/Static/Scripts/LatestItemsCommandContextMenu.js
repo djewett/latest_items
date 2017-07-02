@@ -17,19 +17,36 @@
     },
 
     /**
-     * Whether or not the command is available to the user. This impacts the context menu option.
-     * @returns {boolean}
-     */
+      * Whether or not the command is available to the user. This impacts the context menu option.
+      * @returns {boolean}
+      */
     isAvailable: function (selection) {
-        // Gets the selected item in Tridion GUI
-        var items = selection.getItems();
-        var item = $models.getItem(selection.getItem(0));
+
+        var item = this._getSelectedItem(selection);
+
         // Checks if a container item has been selected.
-        if ((item !== undefined) && $models.isContainerItemType(item.getItemType())) {
+
+        var isValidItemType = ($models.getItemType(item) == $const.ItemType.PUBLICATION) ||
+							  ($models.getItemType(item) == $const.ItemType.FOLDER) ||
+							  ($models.getItemType(item) == $const.ItemType.STRUCTURE_GROUP);
+
+        // TODO: add check and corresponding logic for const.ItemType.CATMAN and Business Process Types (Web 8 only)
+
+        if ((item != null) && (item !== undefined) && isValidItemType) {
             return true;
         }
         else {
             return false;
+        }
+    },
+
+    _getSelectedItem: function (selection) {
+        $assert.isObject(selection);
+
+        switch (selection.getCount()) {
+            case 0: return (selection.getParentItemUri) ? selection.getParentItemUri() : null;
+            case 1: return selection.getItem(0);
+            default: return null;
         }
     },
 

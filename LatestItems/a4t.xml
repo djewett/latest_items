@@ -3,7 +3,7 @@
   <id>55d2828ee4de0213d07c970a</id>
   <name>Latest_Items</name>
   <description><![CDATA[Right click on a folder and select Latest Items to recursively see which contained items are latest items.]]></description>
-  <version>1.0.0.0</version>
+  <version>1.3.0.0</version>
   <references>
     <add file="Tridion.ContentManager.ImportExport.Common.dll" name="Tridion.ContentManager.ImportExport.Common" version="7.1.0.1290" />
     <add file="Tridion.ContentManager.ImportExport.Client.dll" name="Tridion.ContentManager.ImportExport.Client" version="7.1.0.1290" />
