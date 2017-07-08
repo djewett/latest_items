@@ -1,4 +1,7 @@
 # latest_items
+
+See this plugin in the Alchemy Webstore at: http://www.alchemywebstore.com/plugins/Latest-Items
+
 Alchemy plugin for Tridion that filters a list of items edited within some range of time, and exports them to a config file for content porting.
 
 IMPORTANT:
